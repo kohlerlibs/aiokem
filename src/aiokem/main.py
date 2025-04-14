@@ -1,5 +1,7 @@
 """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
+from typing import Any
+
 from aiohttp import ClientSession, ClientTimeout
 
 AUTHENTICATION_URL = "https://kohler-homeenergy.okta.com/oauth2/default/v1/token"
@@ -53,7 +55,7 @@ class AioKem:
         if not self._refresh_token:
             raise Exception("Login failed: No refresh token received")
 
-    async def get_homes(self) -> dict:
+    async def get_homes(self) -> dict[str, Any]:
         """Get the list of homes."""
         url = f"{API_BASE}/kem/api/v3/homeowner/homes"
         headers = {
@@ -69,7 +71,7 @@ class AioKem:
             raise Exception("No data received")
         return response_data
 
-    async def get_generator_data(self, generator_id: int) -> dict:
+    async def get_generator_data(self, generator_id: int) -> dict[str, Any]:
         """Get generator data for a specific generator."""
         url = f"{API_BASE}/kem/api/v3/devices/{generator_id}"
         headers = {
