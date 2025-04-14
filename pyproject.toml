@@ -22,7 +22,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
 ]
 
-dependencies = [
+dependencies = [ aiohttp
 ]
 urls."Bug Tracker" = "https://github.com/kohlerlibs/aiokem/issues"
 urls.Changelog = "https://github.com/kohlerlibs/aiokem/blob/main/CHANGELOG.md"
