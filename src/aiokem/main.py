@@ -3,6 +3,7 @@
 from typing import Any
 
 from aiohttp import ClientSession, ClientTimeout
+from multidict import CIMultiDict
 
 AUTHENTICATION_URL = "https://kohler-homeenergy.okta.com/oauth2/default/v1/token"
 CLIENT_KEY = (
@@ -28,11 +29,14 @@ class AioKem:
 
     async def login(self, username: str, password: str) -> None:
         """Login to the server."""
-        headers = {
-            "accept": "application/json",
-            "authorization": f"Basic {CLIENT_KEY}",
-            "content-type": "application/x-www-form-urlencoded",
-        }
+        headers = CIMultiDict(
+            {
+                "accept": "application/json",
+                "authorization": f"Basic {CLIENT_KEY}",
+                "content-type": "application/x-www-form-urlencoded",
+            }
+        )
+
         data = {
             "grant_type": "password",
             "username": username,
