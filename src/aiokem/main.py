@@ -55,7 +55,7 @@ class AioKem:
         if not self._refresh_token:
             raise Exception("Login failed: No refresh token received")
 
-    async def get_homes(self) -> dict[str, Any]:
+    async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
         url = f"{API_BASE}/kem/api/v3/homeowner/homes"
         headers = {
