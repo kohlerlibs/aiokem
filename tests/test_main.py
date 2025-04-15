@@ -1,6 +1,5 @@
-import json
+from datetime import datetime, timedelta
 from http import HTTPStatus
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -12,10 +11,11 @@ from aiokem.exceptions import (
     CommunicationError,
 )
 from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL, AioKem
+from tests.conftest import get_kem, load_fixture_file
 
 
 @pytest.mark.asyncio
-async def test_login():
+async def test_authenticate():
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -25,13 +25,15 @@ async def test_login():
     mock_response = AsyncMock()
     mock_response.status = 200
     mock_response.json.return_value = {
+        "token_type": "Bearer",
+        "expires_in": 3600,
         "access_token": "mock_access_token",
         "refresh_token": "mock_refresh_token",
     }
     mock_session.post.return_value = mock_response
 
     # Call the login method
-    await kem.login("username", "password")
+    await kem.authenticate("username", "password")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token == "mock_access_token"  # noqa: S105
@@ -48,7 +50,41 @@ async def test_login():
 
 
 @pytest.mark.asyncio
-async def test_login_exceptions():
+async def test_refresh_token():
+    # Create a mock session
+    mock_session = Mock()
+    mock_session.post = AsyncMock()
+    kem = AioKem(session=mock_session)
+    kem._refresh_token = "mock_refresh_token"  # noqa: S105
+
+    # Mock the response for the login method
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "access_token": "mock_access_token",
+        "refresh_token": "mock_refresh_token",
+    }
+    mock_session.post.return_value = mock_response
+
+    await kem.refresh_token()
+
+    # Assert that the access token and refresh token are set correctly
+    assert kem._token == "mock_access_token"  # noqa: S105
+    assert kem._refresh_token == "mock_refresh_token"  # noqa: S105
+    # Assert that the session.post method was called with the correct URL and data
+    mock_session.post.assert_called_once()
+    assert mock_session.post.call_args[0][0] == AUTHENTICATION_URL
+    assert mock_session.post.call_args[1]["data"] == {
+        "grant_type": "refresh_token",
+        "refresh_token": kem._refresh_token,
+        "scope": "openid profile offline_access email",
+    }
+
+
+@pytest.mark.asyncio
+async def test_authenticate_exceptions():
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -64,7 +100,7 @@ async def test_login_exceptions():
 
     # Call the login method
     with pytest.raises(AuthenticationCredentialsError) as excinfo:
-        await kem.login("username", "password")
+        await kem.authenticate("username", "password")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token is None
@@ -83,14 +119,14 @@ async def test_login_exceptions():
     mock_session.post.return_value = mock_response
     # Call the login method
     with pytest.raises(AuthenticationError) as excinfo:
-        await kem.login("username", "password")
+        await kem.authenticate("username", "password")
     assert str(excinfo.value) == "Authentication failed: Disallowed operation. Code 403"
 
     mock_session.post.side_effect = ClientConnectionError("Internet connection error")
 
     # Call the login method
     with pytest.raises(CommunicationError) as excinfo:
-        await kem.login("username", "password")
+        await kem.authenticate("username", "password")
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
@@ -98,20 +134,11 @@ async def test_login_exceptions():
 async def test_get_homes():
     # Create a mock session
     mock_session = Mock()
-    mock_session.get = AsyncMock()
-    kem = AioKem(session=mock_session)
-    kem._token = "test token"  # noqa: S105
-
+    kem = await get_kem(mock_session)
     # Mock the response for the get_homes method
     mock_response = AsyncMock()
     mock_response.status = 200
-
-    # Load the response data from the JSON file
-    fixtures_path = Path(__file__).parent / "fixtures" / "homes.json"
-    with fixtures_path.open() as f:
-        mock_response_data = json.load(f)
-
-    mock_response.json.return_value = mock_response_data
+    mock_response.json.return_value = load_fixture_file("homes.json")
     mock_session.get.return_value = mock_response
 
     _ = await kem.get_homes()
@@ -138,7 +165,7 @@ async def test_get_homes_exceptions():
         await kem.get_homes()
     assert str(excinfo.value) == "Not authenticated"
 
-    kem._token = "Test token"  # noqa: S105
+    kem = await get_kem(mock_session)
     mock_response = AsyncMock()
     mock_response.status = HTTPStatus.UNAUTHORIZED
     mock_response.json.return_value = {
@@ -146,10 +173,9 @@ async def test_get_homes_exceptions():
     }
     mock_session.get.return_value = mock_response
 
-    # Call the login method
     with pytest.raises(AuthenticationError) as excinfo:
         await kem.get_homes()
-    assert str(excinfo.value) == "Unauthorized: {response_data}"
+    assert str(excinfo.value) == f"Unauthorized: {mock_response.json.return_value}"
 
     mock_response.status = HTTPStatus.BAD_REQUEST
     mock_response.json.return_value = "errordata"
@@ -171,20 +197,13 @@ async def test_get_homes_exceptions():
 async def test_get_generator_data():
     # Create a mock session
     mock_session = Mock()
-    mock_session.get = AsyncMock()
-    kem = AioKem(session=mock_session)
-    kem._token = "test token"  # noqa: S105
+    kem = await get_kem(mock_session)
 
     # Mock the response for the get_homes method
     mock_response = AsyncMock()
     mock_response.status = 200
 
-    # Load the response data from the JSON file
-    fixtures_path = Path(__file__).parent / "fixtures" / "generator_data.json"
-    with fixtures_path.open() as f:
-        mock_response_data = json.load(f)
-
-    mock_response.json.return_value = mock_response_data
+    mock_response.json.return_value = load_fixture_file("generator_data.json")
     mock_session.get.return_value = mock_response
 
     _ = await kem.get_generator_data(12345)
@@ -199,3 +218,32 @@ async def test_get_generator_data():
         mock_session.get.call_args[1]["headers"]["authorization"]
         == f"bearer {kem._token}"
     )
+
+
+@pytest.mark.asyncio
+async def test_auto_refresh_token():
+    """Tests the auto-refresh token functionality."""
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    mock_session.post.reset_mock()
+    # Set the token to expire in the past
+    token_expiration = kem._token_expires_at = datetime.now() + timedelta(seconds=-10)
+
+    # Mock the response for the get_homes method
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = load_fixture_file("homes.json")
+    mock_session.get.return_value = mock_response
+
+    _ = await kem.get_homes()
+    # Assert that the access token and refresh token are set correctly
+    assert kem._token == "mock_access_token"  # noqa: S105
+    assert kem._refresh_token == "mock_refresh_token"  # noqa: S105
+    assert kem._token_expires_at > token_expiration
+    mock_session.post.assert_called_once()
+    assert mock_session.post.call_args[0][0] == AUTHENTICATION_URL
+    assert mock_session.post.call_args[1]["data"] == {
+        "grant_type": "refresh_token",
+        "refresh_token": kem._refresh_token,
+        "scope": "openid profile offline_access email",
+    }
