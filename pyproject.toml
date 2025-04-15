@@ -112,6 +112,7 @@ warn_unused_ignores = true
 exclude = [
   'docs/.*',
   'setup.py',
+  'sample/.*',
 ]
 
 [[tool.mypy.overrides]]
