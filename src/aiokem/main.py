@@ -89,7 +89,7 @@ class AioKem:
     async def _get_helper(self, url: URL) -> dict[str, Any] | list[dict[str, Any]]:
         """Helper function to get data from the API."""
         if not self._token:
-            raise CommunicationError("Not authenticated")
+            raise AuthenticationError("Not authenticated")
         headers = CIMultiDict(
             {
                 "apikey": API_KEY,
@@ -104,7 +104,7 @@ class AioKem:
                 if response.status == HTTPStatus.UNAUTHORIZED:
                     raise AuthenticationError("Unauthorized: {response_data}")
                 else:
-                    raise Exception(
+                    raise CommunicationError(
                         f"Failed to fetch data: {response.status} {response_data}"
                     )
 
