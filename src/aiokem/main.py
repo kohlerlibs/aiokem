@@ -15,13 +15,7 @@ from .exceptions import (
     CommunicationError,
 )
 
-# Configure the logger
 _LOGGER = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 AUTHENTICATION_URL = URL("https://kohler-homeenergy.okta.com/oauth2/default/v1/token")
 CLIENT_KEY = (

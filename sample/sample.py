@@ -1,8 +1,16 @@
 import asyncio
+import logging
 import sys
-from datetime import datetime
 
 from aiokem.main import AioKem
+
+# Configure the logger
+_LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 async def main(username: str, password: str) -> None:
@@ -21,10 +29,7 @@ async def main(username: str, password: str) -> None:
     while True:
         for home in homes:
             data = await kem.get_generator_data(int(home["id"]))
-            print(
-                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - "
-                f"Utility Voltage: {data['utilityVoltageV']}"
-            )
+            _LOGGER.info("Utility Voltage: %s", data["utilityVoltageV"])
         await asyncio.sleep(60)  # Sleep for 1 minute before fetching again
 
 
