@@ -2,7 +2,7 @@ import asyncio
 import json
 import sys
 
-from src.aiokem.main import AioKem
+from aiokem.main import AioKem
 
 
 async def main(username: str, password: str) -> None:
