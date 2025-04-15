@@ -81,7 +81,6 @@ class AioKem:
             )
 
         except ClientConnectionError as e:
-            _LOGGER.exception("Connection error during authentication.")
             raise CommunicationError(f"Connection error: {e}") from e
 
     async def authenticate(self, username: str, password: str) -> None:
