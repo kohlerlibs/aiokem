@@ -1,8 +1,16 @@
 import asyncio
-import json
+import logging
 import sys
 
 from aiokem.main import AioKem
+
+# Configure the logger
+_LOGGER = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 async def main(username: str, password: str) -> None:
@@ -12,18 +20,17 @@ async def main(username: str, password: str) -> None:
     kem = AioKem()
 
     # Call the login method
-    await kem.login(username, password)
+    await kem.authenticate(username, password)
 
     # Get the list of homes
     homes = await kem.get_homes()
-    print(json.dumps(homes, indent=4))
 
     # For each home, get the generator data
-    for home in homes:
-        data = await kem.get_generator_data(int(home["id"]))
-        print(json.dumps(data, indent=4))
-
-    await kem.close()
+    while True:
+        for home in homes:
+            data = await kem.get_generator_data(int(home["id"]))
+            _LOGGER.info("Utility Voltage: %s", data["utilityVoltageV"])
+        await asyncio.sleep(60)  # Sleep for 1 minute before fetching again
 
 
 if __name__ == "__main__":
