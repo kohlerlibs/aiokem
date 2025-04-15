@@ -54,5 +54,4 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
-        args: ["--explicit-package-bases"]
         additional_dependencies: []
