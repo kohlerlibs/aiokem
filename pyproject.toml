@@ -23,6 +23,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "aiohttp>=3.11",
 ]
 urls."Bug Tracker" = "https://github.com/kohlerlibs/aiokem/issues"
 urls.Changelog = "https://github.com/kohlerlibs/aiokem/blob/main/CHANGELOG.md"
