@@ -15,7 +15,6 @@ from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL, AioKem
 from tests.conftest import get_kem, load_fixture_file
 
 
-@pytest.mark.asyncio
 async def test_authenticate():
     # Create a mock session
     mock_session = Mock()
@@ -50,7 +49,6 @@ async def test_authenticate():
     }
 
 
-@pytest.mark.asyncio
 async def test_refresh_token():
     # Create a mock session
     mock_session = Mock()
@@ -84,7 +82,6 @@ async def test_refresh_token():
     }
 
 
-@pytest.mark.asyncio
 async def test_authenticate_exceptions():
     # Create a mock session
     mock_session = Mock()
@@ -131,7 +128,6 @@ async def test_authenticate_exceptions():
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
-@pytest.mark.asyncio
 async def test_get_homes():
     # Create a mock session
     mock_session = Mock()
@@ -154,7 +150,6 @@ async def test_get_homes():
     )
 
 
-@pytest.mark.asyncio
 async def test_get_homes_exceptions():
     # Create a mock session
     mock_session = Mock()
@@ -204,7 +199,6 @@ async def test_get_homes_exceptions():
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
-@pytest.mark.asyncio
 async def test_get_generator_data():
     # Create a mock session
     mock_session = Mock()
@@ -231,7 +225,6 @@ async def test_get_generator_data():
     )
 
 
-@pytest.mark.asyncio
 async def test_auto_refresh_token():
     """Tests the auto-refresh token functionality."""
     mock_session = Mock()
