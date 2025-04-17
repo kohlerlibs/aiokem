@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.2 (2025-04-17)
+
+### Bug fixes
+
+- Add missing pytest-asyncio dev dep so tests run in ci (#10) ([`556215a`](https://github.com/kohlerlibs/aiokem/commit/556215a1704f81f128d365fe65572f1db0c6bfb5))
+
 ## v0.2.1 (2025-04-17)
 
 ### Bug fixes
