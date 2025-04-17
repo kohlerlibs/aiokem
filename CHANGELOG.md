@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.0 (2025-04-17)
+
+### Features
+
+- Small code cleanups (#9) ([`98e912f`](https://github.com/kohlerlibs/aiokem/commit/98e912f56888a727fe1b0bb9f4409be77c091df0))
+
 ## v0.2.2 (2025-04-17)
 
 ### Bug fixes
