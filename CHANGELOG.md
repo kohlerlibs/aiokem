@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1 (2025-04-17)
+
+### Bug fixes
+
+- Process http_status 500 (#8) ([`6ab9e5a`](https://github.com/kohlerlibs/aiokem/commit/6ab9e5a18cd14c9230e7abc9a2d33286dd2b298a))
+
 ## v0.2.0 (2025-04-15)
 
 ### Features
