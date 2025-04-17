@@ -7,6 +7,13 @@ class AioKemError(Exception):
     pass
 
 
+class ServerError(AioKemError):
+    """Exception raised for server-related errors."""
+
+    def __init__(self, message: str = "Server error"):
+        super().__init__(message)
+
+
 class AuthenticationError(AioKemError):
     """Exception raised for authentication-related errors."""
 

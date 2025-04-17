@@ -13,6 +13,7 @@ from .exceptions import (
     AuthenticationCredentialsError,
     AuthenticationError,
     CommunicationError,
+    ServerError,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -150,6 +151,11 @@ class AioKem:
             if response.status != 200:
                 if response.status == HTTPStatus.UNAUTHORIZED:
                     raise AuthenticationError(f"Unauthorized: {response_data}")
+                elif response.status == HTTPStatus.INTERNAL_SERVER_ERROR:
+                    raise ServerError(
+                        "Server error: "
+                        f"{response_data.get('error_description', 'unknown')}"
+                    )
                 else:
                     raise CommunicationError(
                         f"Failed to fetch data: {response.status} {response_data}"
