@@ -93,7 +93,7 @@ class AioKem:
 
     async def authenticate(self, username: str, password: str) -> None:
         """Login to the server."""
-        _LOGGER.info("Authenticating user %s", username)
+        _LOGGER.debug("Authenticating user %s", username)
         await self._authentication_helper(
             {
                 "grant_type": "password",
@@ -105,7 +105,7 @@ class AioKem:
 
     async def refresh_token(self) -> None:
         """Refresh the access token using the refresh token."""
-        _LOGGER.info("Refreshing access token.")
+        _LOGGER.debug("Refreshing access token.")
         if not self._refresh_token:
             raise AuthenticationError("No refresh token available")
         await self._authentication_helper(
@@ -153,7 +153,7 @@ class AioKem:
 
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
-        _LOGGER.info("Fetching list of homes.")
+        _LOGGER.debug("Fetching list of homes.")
         response = await self._get_helper(HOMES_URL)
         if not isinstance(response, list):
             raise TypeError(
@@ -163,7 +163,7 @@ class AioKem:
 
     async def get_generator_data(self, generator_id: int) -> dict[str, Any]:
         """Get generator data for a specific generator."""
-        _LOGGER.info("Fetching generator data for generator ID %d", generator_id)
+        _LOGGER.debug("Fetching generator data for generator ID %d", generator_id)
         url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}")
         response = await self._get_helper(url)
         if not isinstance(response, dict):
@@ -175,5 +175,5 @@ class AioKem:
 
     async def close(self) -> None:
         """Close the session."""
-        _LOGGER.info("Closing the session.")
+        _LOGGER.debug("Closing the session.")
         await self._session.close()
