@@ -1,5 +1,7 @@
 """Exceptions for the aiokem package."""
 
+from __future__ import annotations
+
 
 class AioKemError(Exception):
     """Base exception for the aiokem package."""
