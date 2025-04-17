@@ -9,6 +9,7 @@ from aiokem.exceptions import (
     AuthenticationCredentialsError,
     AuthenticationError,
     CommunicationError,
+    ServerError,
 )
 from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL, AioKem
 from tests.conftest import get_kem, load_fixture_file
@@ -176,6 +177,16 @@ async def test_get_homes_exceptions():
     with pytest.raises(AuthenticationError) as excinfo:
         await kem.get_homes()
     assert str(excinfo.value) == f"Unauthorized: {mock_response.json.return_value}"
+
+    mock_response.status = HTTPStatus.INTERNAL_SERVER_ERROR
+    mock_response.json.return_value = {
+        "error_description": "Internal Error",
+    }
+    mock_session.get.return_value = mock_response
+
+    with pytest.raises(ServerError) as excinfo:
+        await kem.get_homes()
+    assert str(excinfo.value) == "Server error: Internal Error"
 
     mock_response.status = HTTPStatus.BAD_REQUEST
     mock_response.json.return_value = "errordata"
