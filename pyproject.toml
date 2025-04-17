@@ -4,7 +4,7 @@ requires = [ "setuptools" ]
 
 [project]
 name = "aiokem"
-version = "0.2.1"
+version = "0.2.2"
 description = "Async API for Kohler Energy Management"
 readme = "README.md"
 license = { text = "MIT" }
@@ -34,6 +34,7 @@ urls.repository = "https://github.com/kohlerlibs/aiokem"
 dev = [
   "pytest>=8,<9",
   "pytest-cov>=6,<7",
+  "pytest-asyncio>=0.26.0",
 ]
 docs = [
   "furo>=2023.5.20; python_version>='3.11'",
@@ -85,6 +86,7 @@ addopts = """\
     --cov-report=term
     --cov-report=xml
     """
+asyncio_mode = "auto"
 pythonpath = [ "src" ]
 
 [tool.coverage.run]
@@ -156,3 +158,6 @@ match = "main"
 [tool.semantic_release.branches.noop]
 match = "(?!main$)"
 prerelease = true
+
+
+
