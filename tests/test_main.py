@@ -49,12 +49,11 @@ async def test_authenticate():
     }
 
 
-async def test_refresh_token():
+async def test_authenticate_with_refresh_token():
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
     kem = AioKem(session=mock_session)
-    kem._refresh_token = "mock_refresh_token"  # noqa: S105
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -67,7 +66,7 @@ async def test_refresh_token():
     }
     mock_session.post.return_value = mock_response
 
-    await kem.refresh_token()
+    await kem.authenticate_with_refresh_token("mock_refresh_token")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token == "mock_access_token"  # noqa: S105
@@ -80,6 +79,43 @@ async def test_refresh_token():
         "refresh_token": kem._refresh_token,
         "scope": "openid profile offline_access email",
     }
+
+
+class TestKem(AioKem):
+    """Test class to override the on_refresh_token_update method."""
+
+    def __init__(self, session=None):
+        super().__init__(session=session)
+        self.refreshed = False
+        self.refreshed_token = None
+
+    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
+        """Override the refresh token update method."""
+        self.refreshed = True
+        self.refreshed_token = refresh_token
+
+
+async def test_refresh_token_callback():
+    # Create a mock session
+    mock_session = Mock()
+    mock_session.post = AsyncMock()
+    kem = TestKem(session=mock_session)
+
+    # Mock the response for the login method
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "access_token": "mock_access_token",
+        "refresh_token": "updated_refresh_token",
+    }
+    mock_session.post.return_value = mock_response
+
+    await kem.authenticate_with_refresh_token("mock_refresh_token")
+
+    assert kem.refreshed_token == "updated_refresh_token"  # noqa: S105
+    assert kem.refreshed is True
 
 
 async def test_authenticate_exceptions():
