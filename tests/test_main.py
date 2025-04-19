@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+import time
 from http import HTTPStatus
 from unittest.mock import AsyncMock, Mock
 
@@ -231,7 +231,7 @@ async def test_auto_refresh_token():
     kem = await get_kem(mock_session)
     mock_session.post.reset_mock()
     # Set the token to expire in the past
-    token_expiration = kem._token_expires_at = datetime.now() + timedelta(seconds=-10)
+    token_expiration = kem._token_expires_at = time.monotonic() - 10000
 
     # Mock the response for the get_homes method
     mock_response = AsyncMock()
