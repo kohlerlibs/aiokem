@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0 (2025-04-19)
+
+### Features
+
+- Authenticate with refresh token (#14) ([`27d23e0`](https://github.com/kohlerlibs/aiokem/commit/27d23e008d47752adadba73c5f5b575a1bba8282))
+
 ## v0.3.0 (2025-04-17)
 
 ### Features
