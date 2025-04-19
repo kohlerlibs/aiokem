@@ -57,6 +57,11 @@ class AioKem:
         self._token_expires_in: int = 0
         self._refresh_lock = asyncio.Lock()
 
+    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
+        """Callback for refresh token update."""
+        # This method can be overridden to handle refresh token updates
+        _LOGGER.debug("Refresh token updated: %s", refresh_token)
+
     async def _authentication_helper(self, data: dict[str, Any]) -> None:
         _LOGGER.debug("Sending authentication request to %s", AUTHENTICATION_URL)
         try:
@@ -106,21 +111,23 @@ class AioKem:
                 "scope": "openid profile offline_access email",
             }
         )
+        await self.on_refresh_token_update(self._refresh_token)
 
-    async def refresh_token(self) -> None:
-        """Refresh the access token using the refresh token."""
-        _LOGGER.debug("Refreshing access token.")
-        if not self._refresh_token:
-            raise AuthenticationError("No refresh token available")
+    async def authenticate_with_refresh_token(self, refresh_token: str) -> None:
+        """Login to the server using a refresh token."""
+        _LOGGER.debug("Authenticating with refresh token.")
         await self._authentication_helper(
             {
                 "grant_type": "refresh_token",
-                "refresh_token": self._refresh_token,
+                "refresh_token": refresh_token,
                 "scope": "openid profile offline_access email",
             }
         )
+        await self.on_refresh_token_update(self._refresh_token)
 
-    async def _check_token(self) -> None:
+    async def check_and_refresh_token(self) -> None:
+        """Check if the token is expired and refresh it if necessary."""
+        _LOGGER.debug("Checking if token needs to be refreshed.")
         if not self._token:
             raise AuthenticationError("Not authenticated")
         if time.monotonic() >= self._token_expires_at:
@@ -128,11 +135,19 @@ class AioKem:
             async with self._refresh_lock:
                 if time.monotonic() >= self._token_expires_at:
                     _LOGGER.debug("Access token expired. Refreshing token.")
-                    await self.refresh_token()
+                await self._authentication_helper(
+                    {
+                        "grant_type": "refresh_token",
+                        "refresh_token": self._refresh_token,
+                        "scope": "openid profile offline_access email",
+                    }
+                )
+            # Execute callback outside of lock to avoid deadlock
+            await self.on_refresh_token_update(self._refresh_token)
 
     async def _get_helper(self, url: URL) -> dict[str, Any] | list[dict[str, Any]]:
         """Helper function to get data from the API."""
-        await self._check_token()
+        await self.check_and_refresh_token()
         headers = CIMultiDict(
             {
                 API_KEY_HDR: API_KEY,
