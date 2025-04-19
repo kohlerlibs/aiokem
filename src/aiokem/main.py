@@ -124,7 +124,7 @@ class AioKem:
         if not self._token:
             raise AuthenticationError("Not authenticated")
         if time.monotonic() >= self._token_expires_at:
-            # Prevent entry and refreshing token multiple times
+            # Prevent reentry and refreshing token multiple times
             async with self._refresh_lock:
                 if time.monotonic() >= self._token_expires_at:
                     _LOGGER.debug("Access token expired. Refreshing token.")
