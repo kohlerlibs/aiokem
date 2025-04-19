@@ -63,6 +63,7 @@ class AioKem:
         _LOGGER.debug("Refresh token updated: %s", refresh_token)
 
     async def _authentication_helper(self, data: dict[str, Any]) -> None:
+        """Helper function for authentication."""
         _LOGGER.debug("Sending authentication request to %s", AUTHENTICATION_URL)
         try:
             response = await self._session.post(
