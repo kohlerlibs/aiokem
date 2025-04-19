@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import time
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
@@ -51,6 +53,9 @@ class AioKem:
         self._token: str | None = None
         self._refresh_token: str | None = None
         self._session = session or ClientSession(timeout=CLIENT_TIMEOUT)
+        self._token_expires_at: float = 0
+        self._token_expires_in: int = 0
+        self._refresh_lock = asyncio.Lock()
 
     async def _authentication_helper(self, data: dict[str, Any]) -> None:
         _LOGGER.debug("Sending authentication request to %s", AUTHENTICATION_URL)
@@ -83,12 +88,11 @@ class AioKem:
         if not self._refresh_token:
             raise ServerError("Login failed: No refresh token received")
 
-        self._token_expiration = response_data.get("expires_in")
-        self._token_expires_at = datetime.now() + timedelta(
-            seconds=self._token_expiration
-        )
+        self._token_expires_in = response_data.get("expires_in")
+        self._token_expires_at = time.monotonic() + self._token_expires_in
         _LOGGER.debug(
-            "Authentication successful. Token expires at %s", self._token_expires_at
+            "Authentication successful. Token expires at %s",
+            datetime.now() + timedelta(seconds=self._token_expires_in),
         )
 
     async def authenticate(self, username: str, password: str) -> None:
@@ -116,14 +120,19 @@ class AioKem:
             }
         )
 
-    async def _get_helper(self, url: URL) -> dict[str, Any] | list[dict[str, Any]]:
-        """Helper function to get data from the API."""
+    async def _check_token(self) -> None:
         if not self._token:
             raise AuthenticationError("Not authenticated")
-        if datetime.now() >= self._token_expires_at:
-            _LOGGER.debug("Access token expired. Refreshing token.")
-            await self.refresh_token()
+        if time.monotonic() >= self._token_expires_at:
+            # Prevent entry and refreshing token multiple times
+            async with self._refresh_lock:
+                if time.monotonic() >= self._token_expires_at:
+                    _LOGGER.debug("Access token expired. Refreshing token.")
+                    await self.refresh_token()
 
+    async def _get_helper(self, url: URL) -> dict[str, Any] | list[dict[str, Any]]:
+        """Helper function to get data from the API."""
+        await self._check_token()
         headers = CIMultiDict(
             {
                 API_KEY_HDR: API_KEY,
