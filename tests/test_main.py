@@ -1,3 +1,4 @@
+import logging
 import time
 from http import HTTPStatus
 from unittest.mock import AsyncMock, Mock
@@ -12,10 +13,12 @@ from aiokem.exceptions import (
     ServerError,
 )
 from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL, AioKem
+from aiokem.message_logger import REDACTED
 from tests.conftest import get_kem, load_fixture_file
 
 
-async def test_authenticate():
+async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
+    """Tests the authenticate method."""
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -33,7 +36,9 @@ async def test_authenticate():
     mock_session.post.return_value = mock_response
 
     # Call the login method
-    await kem.authenticate("username", "password")
+    with caplog.at_level(logging.DEBUG):
+        caplog.clear()
+        await kem.authenticate("username", "password")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token == "mock_access_token"  # noqa: S105
@@ -48,8 +53,12 @@ async def test_authenticate():
         "scope": "openid profile offline_access email",
     }
 
+    assert '"access_token": "**redacted**"' in caplog.text
+    assert '"refresh_token": "**redacted**"' in caplog.text
 
-async def test_authenticate_with_refresh_token():
+
+async def test_authenticate_with_refresh_token() -> None:
+    """Tests the authenticate_with_refresh_token method."""
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -95,7 +104,7 @@ class TestKem(AioKem):
         self.refreshed_token = refresh_token
 
 
-async def test_refresh_token_callback():
+async def test_refresh_token_callback() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -118,7 +127,7 @@ async def test_refresh_token_callback():
     assert kem.refreshed is True
 
 
-async def test_authenticate_exceptions():
+async def test_authenticate_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
@@ -164,7 +173,8 @@ async def test_authenticate_exceptions():
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
-async def test_get_homes():
+async def test_get_homes(caplog: pytest.LogCaptureFixture) -> None:
+    """Tests the get_homes method."""
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -174,7 +184,9 @@ async def test_get_homes():
     mock_response.json.return_value = load_fixture_file("homes.json")
     mock_session.get.return_value = mock_response
 
-    _ = await kem.get_homes()
+    with caplog.at_level(logging.DEBUG):
+        caplog.clear()
+        _ = await kem.get_homes()
 
     # Assert that the session.post method was called with the correct URL and data
     mock_session.get.assert_called_once()
@@ -185,8 +197,11 @@ async def test_get_homes():
         == f"bearer {kem._token}"
     )
 
+    assert "Generator 1" in caplog.text
+    assert REDACTED in caplog.text
 
-async def test_get_homes_exceptions():
+
+async def test_get_homes_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.get = AsyncMock()
@@ -235,7 +250,7 @@ async def test_get_homes_exceptions():
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
-async def test_get_generator_data():
+async def test_get_generator_data() -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -261,7 +276,7 @@ async def test_get_generator_data():
     )
 
 
-async def test_auto_refresh_token():
+async def test_auto_refresh_token() -> None:
     """Tests the auto-refresh token functionality."""
     mock_session = Mock()
     kem = await get_kem(mock_session)

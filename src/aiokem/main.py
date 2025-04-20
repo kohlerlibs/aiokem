@@ -19,6 +19,7 @@ from .exceptions import (
     CommunicationError,
     ServerError,
 )
+from .message_logger import log_json_message
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +73,9 @@ class AioKem:
             response_data = await response.json()
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            log_json_message(response_data)
 
         if response.status != HTTPStatus.OK:
             if response.status == HTTPStatus.BAD_REQUEST:
@@ -161,6 +165,9 @@ class AioKem:
             response_data = await response.json()
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            log_json_message(response_data)
 
         if response.status != 200:
             if response.status == HTTPStatus.UNAUTHORIZED:
