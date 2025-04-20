@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.0 (2025-04-20)
+
+### Features
+
+- Redact message fields (#15) ([`d803910`](https://github.com/kohlerlibs/aiokem/commit/d80391062fb70facf1252dbe13a4331223177e52))
+
 ## v0.4.0 (2025-04-19)
 
 ### Features
