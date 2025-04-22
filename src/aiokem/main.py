@@ -49,11 +49,11 @@ CLIENT_TIMEOUT = ClientTimeout(total=10)
 class AioKem:
     """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
-    def __init__(self, session: ClientSession = None) -> None:
+    def __init__(self, session: ClientSession) -> None:
         """Initialize the AioKem class."""
         self._token: str | None = None
         self._refresh_token: str | None = None
-        self._session = session or ClientSession(timeout=CLIENT_TIMEOUT)
+        self._session = session
         self._token_expires_at: float = 0
         self._token_expires_in: int = 0
         self._refresh_lock = asyncio.Lock()
@@ -207,5 +207,7 @@ class AioKem:
 
     async def close(self) -> None:
         """Close the session."""
-        _LOGGER.debug("Closing the session.")
-        await self._session.close()
+        _LOGGER.debug("Closing AioKem.")
+        self._session = None
+        self._token = None
+        self._refresh_token = None

@@ -302,3 +302,17 @@ async def test_auto_refresh_token() -> None:
         "refresh_token": kem._refresh_token,
         "scope": "openid profile offline_access email",
     }
+
+
+async def test_close() -> None:
+    """Tests the close method."""
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    assert kem._session is not None
+    assert kem._token is not None
+    assert kem._refresh_token is not None
+    await kem.close()
+
+    # Assert final state after close
+    assert kem._session is None
