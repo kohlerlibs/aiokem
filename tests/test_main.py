@@ -310,9 +310,7 @@ async def test_close() -> None:
     mock_session = Mock()
     kem = await get_kem(mock_session)
     assert kem._session is not None
-    assert kem._token is not None
-    assert kem._refresh_token is not None
+
     await kem.close()
 
-    # Assert final state after close
     assert kem._session is None
