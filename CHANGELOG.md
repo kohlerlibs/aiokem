@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.1 (2025-04-22)
+
+### Bug fixes
+
+- Update docs for init (#18) ([`0c10eef`](https://github.com/kohlerlibs/aiokem/commit/0c10eef698463ce508629029bc1754579d303eb1))
+- Require user to pass client session into init (#17) ([`a979e84`](https://github.com/kohlerlibs/aiokem/commit/a979e84b93fbe2fa808bd05352387ae1d9f4bff2))
+
 ## v0.5.0 (2025-04-20)
 
 ### Features
