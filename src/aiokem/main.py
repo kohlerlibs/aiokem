@@ -50,7 +50,13 @@ class AioKem:
     """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
     def __init__(self, session: ClientSession) -> None:
-        """Initialize the AioKem class."""
+        """
+        Initialize the AioKem class.
+
+        Args:
+            session (ClientSession): An aiohttp ClientSession object.
+
+        """
         self._token: str | None = None
         self._refresh_token: str | None = None
         self._session = session
