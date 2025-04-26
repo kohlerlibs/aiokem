@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.3 (2025-04-26)
+
+### Bug fixes
+
+- Add retry logic (#20) ([`05f633a`](https://github.com/kohlerlibs/aiokem/commit/05f633aadbc5dcab52c0983b14c32cb0f0dfdf77))
+
 ## v0.5.2 (2025-04-26)
 
 ### Bug fixes
