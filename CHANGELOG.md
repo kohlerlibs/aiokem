@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.2 (2025-04-26)
+
+### Bug fixes
+
+- Use new api base url (#19) ([`2c95d36`](https://github.com/kohlerlibs/aiokem/commit/2c95d365de7753e8acee6885caa21141d3989d00))
+
 ## v0.5.1 (2025-04-22)
 
 ### Bug fixes
