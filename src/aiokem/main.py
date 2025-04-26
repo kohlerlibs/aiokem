@@ -5,11 +5,18 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
-from aiohttp import ClientConnectionError, ClientSession, ClientTimeout, hdrs
+from aiohttp import (
+    ClientConnectionError,
+    ClientConnectorError,
+    ClientSession,
+    ClientTimeout,
+    hdrs,
+)
 from multidict import CIMultiDict, istr
 from yarl import URL
 
@@ -43,8 +50,16 @@ AUTH_HEADERS = CIMultiDict(
 )
 CLIENT_TIMEOUT = ClientTimeout(total=10)
 
+RETRY_EXCEPTIONS = (
+    CommunicationError,
+    ServerError,
+    ClientConnectorError,
+)
 
-class AioKem:
+AUTHORIZATION_EXCEPTIONS = (AuthenticationError,)
+
+
+class AioKem(ABC):
     """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
     def __init__(self, session: ClientSession) -> None:
@@ -60,7 +75,29 @@ class AioKem:
         self._session = session
         self._token_expires_at: float = 0
         self._token_expires_in: int = 0
+        self._retry_count: int = 0
+        self._retry_delays: list[int] = []
         self._refresh_lock = asyncio.Lock()
+
+    @abstractmethod
+    def get_username(self) -> str:
+        """Implement in the derived class."""
+
+    @abstractmethod
+    def get_password(self) -> str:
+        """Implement in the derived class."""
+
+    def set_retry_policy(self, retry_count: int, retry_delays: list[int]) -> None:
+        """
+        Set the retry policy for the session.
+
+        Args:
+            retry_count (int): Number of retries. Zero means no retries.
+            retry_delays (list[int]): Delay between retries in seconds for each retry.
+
+        """
+        self._retry_count = retry_count
+        self._retry_delays = retry_delays
 
     async def on_refresh_token_update(self, refresh_token: str | None) -> None:
         """Callback for refresh token update."""
@@ -156,7 +193,6 @@ class AioKem:
 
     async def _get_helper(self, url: URL) -> dict[str, Any] | list[dict[str, Any]]:
         """Helper function to get data from the API."""
-        await self.check_and_refresh_token()
         headers = CIMultiDict(
             {
                 API_KEY_HDR: API_KEY,
@@ -187,10 +223,41 @@ class AioKem:
         _LOGGER.debug("Data successfully fetched from %s", url)
         return response_data
 
+    async def _retry_auth(self) -> bool:
+        """Retry authentication."""
+        _LOGGER.debug("Retrying authentication")
+        try:
+            username = self.get_username()
+            password = self.get_password()
+            await self.authenticate(username=username, password=password)
+        except AuthenticationError as error:
+            _LOGGER.error("Authentication failed: %s", error)
+            return False
+        return True
+
+    async def _retry_get_helper(
+        self, url: URL
+    ) -> dict[str, Any] | list[dict[str, Any]]:
+        """Retry GET request with exponential backoff."""
+        await self.check_and_refresh_token()
+        for attempt in range(self._retry_count + 1):
+            if attempt > 0:
+                await asyncio.sleep(self._retry_delays[attempt - 1])
+            try:
+                return await self._get_helper(url)
+            except RETRY_EXCEPTIONS as error:
+                _LOGGER.warning("Error communicating with KEM: %s", error)
+            except AUTHORIZATION_EXCEPTIONS as error:
+                _LOGGER.warning("Authorization error communicating with KEM: %s", error)
+                if not await self._retry_auth():
+                    raise AuthenticationError("Retry authentication failed") from error
+        _LOGGER.error("Failed to get data after %s retries", attempt)
+        raise CommunicationError("Failed to get data after retries")
+
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
         _LOGGER.debug("Fetching list of homes.")
-        response = await self._get_helper(HOMES_URL)
+        response = await self._retry_get_helper(HOMES_URL)
         if not isinstance(response, list):
             raise TypeError(
                 f"Expected a list of homes, but got a different type {type(response)}"
@@ -201,7 +268,7 @@ class AioKem:
         """Get generator data for a specific generator."""
         _LOGGER.debug("Fetching generator data for generator ID %d", generator_id)
         url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}")
-        response = await self._get_helper(url)
+        response = await self._retry_get_helper(url)
         if not isinstance(response, dict):
             raise TypeError(
                 "Expected a dictionary for generator data, "

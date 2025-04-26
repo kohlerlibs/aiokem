@@ -8,11 +8,31 @@ from unittest.mock import AsyncMock, Mock
 from aiokem.main import AioKem
 
 
+class TestAioKem(AioKem):
+    """Test class for AioKem."""
+
+    def __init__(self, session: Mock) -> None:
+        super().__init__(session=session)
+        self.refreshed = False
+        self.refreshed_token: str | None = None
+
+    def get_username(self) -> str:
+        return "username"
+
+    def get_password(self) -> str:
+        return "password"
+
+    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
+        """Override the refresh token update method."""
+        self.refreshed = True
+        self.refreshed_token = refresh_token
+
+
 async def get_kem(mock_session: Mock) -> AioKem:
     """Fixture to create a mock session and authenticate."""
     mock_session.post = AsyncMock()
     mock_session.get = AsyncMock()
-    kem = AioKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()

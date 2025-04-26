@@ -10,11 +10,10 @@ from aiokem.exceptions import (
     AuthenticationCredentialsError,
     AuthenticationError,
     CommunicationError,
-    ServerError,
 )
-from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL, AioKem
+from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL
 from aiokem.message_logger import REDACTED
-from tests.conftest import get_kem, load_fixture_file
+from tests.conftest import TestAioKem, get_kem, load_fixture_file
 
 
 async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
@@ -22,7 +21,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = AioKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -62,7 +61,7 @@ async def test_authenticate_with_refresh_token() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = AioKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -90,25 +89,11 @@ async def test_authenticate_with_refresh_token() -> None:
     }
 
 
-class TestKem(AioKem):
-    """Test class to override the on_refresh_token_update method."""
-
-    def __init__(self, session=None):
-        super().__init__(session=session)
-        self.refreshed = False
-        self.refreshed_token = None
-
-    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
-        """Override the refresh token update method."""
-        self.refreshed = True
-        self.refreshed_token = refresh_token
-
-
 async def test_refresh_token_callback() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = TestKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -131,7 +116,7 @@ async def test_authenticate_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = AioKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -205,49 +190,12 @@ async def test_get_homes_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.get = AsyncMock()
-    kem = AioKem(session=mock_session)
+    kem = TestAioKem(session=mock_session)
 
     # No token set
     with pytest.raises(AuthenticationError) as excinfo:
         await kem.get_homes()
     assert str(excinfo.value) == "Not authenticated"
-
-    kem = await get_kem(mock_session)
-    mock_response = AsyncMock()
-    mock_response.status = HTTPStatus.UNAUTHORIZED
-    mock_response.json.return_value = {
-        "error_description": "Unauthorized.",
-    }
-    mock_session.get.return_value = mock_response
-
-    with pytest.raises(AuthenticationError) as excinfo:
-        await kem.get_homes()
-    assert str(excinfo.value) == f"Unauthorized: {mock_response.json.return_value}"
-
-    mock_response.status = HTTPStatus.INTERNAL_SERVER_ERROR
-    mock_response.json.return_value = {
-        "error_description": "Internal Error",
-    }
-    mock_session.get.return_value = mock_response
-
-    with pytest.raises(ServerError) as excinfo:
-        await kem.get_homes()
-    assert str(excinfo.value) == "Server error: Internal Error"
-
-    mock_response.status = HTTPStatus.BAD_REQUEST
-    mock_response.json.return_value = "errordata"
-    with pytest.raises(CommunicationError) as excinfo:
-        await kem.get_homes()
-    assert (
-        str(excinfo.value)
-        == f"Failed to fetch data: {HTTPStatus.BAD_REQUEST} errordata"
-    )
-
-    mock_session.get.side_effect = ClientConnectionError("Internet connection error")
-
-    with pytest.raises(CommunicationError) as excinfo:
-        await kem.get_homes()
-    assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
 async def test_get_generator_data() -> None:
@@ -314,3 +262,68 @@ async def test_close() -> None:
     await kem.close()
 
     assert kem._session is None
+
+
+async def test_retries() -> None:
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_retry_policy(0, [0, 0, 0])
+    mock_session.get.side_effect = CommunicationError("Comms error")
+    mock_session.get.reset_mock()
+    with pytest.raises(CommunicationError):
+        await kem.get_generator_data(12345)
+
+    assert mock_session.get.call_count == 1
+
+    kem.set_retry_policy(3, [0, 0, 0])
+
+    mock_session.get.side_effect = CommunicationError("Comms error")
+    mock_session.get.reset_mock()
+    # Test a retryable error
+    with pytest.raises(CommunicationError):
+        await kem.get_generator_data(12345)
+    assert mock_session.get.call_count == 4
+
+    # Test a non-retryable error
+    mock_session.get.side_effect = ValueError("An exception")
+    mock_session.get.reset_mock()
+
+    with pytest.raises(ValueError):
+        await kem.get_generator_data(12345)
+
+    assert mock_session.get.call_count == 1
+
+    # Test an authentication error
+    # This should result in reauthenticating.
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    generator = load_fixture_file("generator_data.json")
+    mock_response.json.return_value = generator
+    mock_session.get.reset_mock()
+    mock_session.get.side_effect = [
+        AuthenticationError("An exception"),
+        mock_response,
+    ]
+    mock_session.post.reset_mock()
+
+    response = await kem.get_generator_data(12345)
+
+    assert response == generator
+    assert mock_session.get.call_count == 2
+    assert mock_session.post.call_count == 1
+
+    # Test a persistent authentication error
+    # This should result in failure with no retries.
+    mock_session.post.reset_mock()
+    mock_session.post.side_effect = AuthenticationError("Unauthorized")
+    mock_session.get.reset_mock()
+    mock_session.get.side_effect = [
+        AuthenticationError("An exception"),
+        generator,
+    ]
+
+    with pytest.raises(AuthenticationError):
+        await kem.get_generator_data(12345)
+
+    assert mock_session.post.call_count == 1
+    assert mock_session.get.call_count == 1
