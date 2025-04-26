@@ -30,9 +30,7 @@ CLIENT_KEY = (
 )
 API_KEY = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp"
 API_KEY_HDR = istr("apikey")
-API_BASE = (
-    "https://az-amer-prod-hems-capp.jollyglacier-72224ec0.eastus.azurecontainerapps.io"
-)
+API_BASE = "https://api.hems.rehlko.com"
 API_BASE_URL = URL(API_BASE)
 HOMES_URL = URL(f"{API_BASE}/kem/api/v3/homeowner/homes")
 
