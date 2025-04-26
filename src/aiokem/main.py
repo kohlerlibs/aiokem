@@ -82,12 +82,10 @@ class AioKem(ABC):
     @abstractmethod
     def get_username(self) -> str:
         """Implement in the derived class."""
-        pass
 
     @abstractmethod
     def get_password(self) -> str:
         """Implement in the derived class."""
-        pass
 
     def set_retry_policy(self, retry_count: int, retry_delays: list[int]) -> None:
         """
