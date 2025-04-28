@@ -37,7 +37,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
     # Call the login method
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        await kem.authenticate("username", "password")
+        await kem.authenticate("email", "password")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token == "mock_access_token"  # noqa: S105
@@ -47,7 +47,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
     assert mock_session.post.call_args[0][0] == AUTHENTICATION_URL
     assert mock_session.post.call_args[1]["data"] == {
         "grant_type": "password",
-        "username": "username",
+        "username": "email",
         "password": "password",
         "scope": "openid profile offline_access email",
     }
@@ -74,7 +74,11 @@ async def test_authenticate_with_refresh_token() -> None:
     }
     mock_session.post.return_value = mock_response
 
-    await kem.authenticate_with_refresh_token("mock_refresh_token")
+    await kem.authenticate(
+        email="email",
+        password="password",  # noqa: S106
+        refresh_token="mock_refresh_token",  # noqa: S106
+    )
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token == "mock_access_token"  # noqa: S105
@@ -128,7 +132,7 @@ async def test_authenticate_exceptions() -> None:
 
     # Call the login method
     with pytest.raises(AuthenticationCredentialsError) as excinfo:
-        await kem.authenticate("username", "password")
+        await kem.authenticate("email", "password")
 
     # Assert that the access token and refresh token are set correctly
     assert kem._token is None
@@ -147,14 +151,14 @@ async def test_authenticate_exceptions() -> None:
     mock_session.post.return_value = mock_response
     # Call the login method
     with pytest.raises(AuthenticationError) as excinfo:
-        await kem.authenticate("username", "password")
+        await kem.authenticate("email", "password")
     assert str(excinfo.value) == "Authentication failed: Disallowed operation. Code 403"
 
     mock_session.post.side_effect = ClientConnectionError("Internet connection error")
 
     # Call the login method
     with pytest.raises(CommunicationError) as excinfo:
-        await kem.authenticate("username", "password")
+        await kem.authenticate("email", "password")
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 

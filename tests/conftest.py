@@ -16,12 +16,6 @@ class TestAioKem(AioKem):
         self.refreshed = False
         self.refreshed_token: str | None = None
 
-    def get_username(self) -> str:
-        return "username"
-
-    def get_password(self) -> str:
-        return "password"
-
     async def on_refresh_token_update(self, refresh_token: str | None) -> None:
         """Override the refresh token update method."""
         self.refreshed = True
@@ -45,7 +39,7 @@ async def get_kem(mock_session: Mock) -> AioKem:
     }
     mock_session.post.return_value = mock_response
 
-    await kem.authenticate("username", "password")
+    await kem.authenticate("email", "password")
     return kem
 
 

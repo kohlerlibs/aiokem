@@ -18,34 +18,21 @@ logging.basicConfig(
 class MyAioKem(AioKem):
     """Custom AioKem class to handle authentication and data retrieval."""
 
-    def __init__(self, session: ClientSession, username: str, password: str) -> None:
-        super().__init__(session=session)
-        self.username = username
-        self.password = password
-
     async def on_refresh_token_update(self, refresh_token: str | None) -> None:
         """Handle the refresh token update."""
         _LOGGER.info("Refresh token updated: %s", refresh_token)
 
-    def get_username(self) -> str:
-        """Return the username for authentication when required by retries."""
-        return username
 
-    def get_password(self) -> str:
-        """Return the password for authentication when required by retries."""
-        return password
-
-
-async def main(username: str, password: str) -> None:
+async def main(email: str, password: str) -> None:
     """Main function to demonstrate the usage of AioKem."""
     # Create an instance of AioKem
     async with ClientSession() as session:
-        kem = MyAioKem(session=session, username=username, password=password)
+        kem = MyAioKem(session=session)
         # Retry 2x with 1 and 2 seconds delays
         kem.set_retry_policy(retry_count=2, retry_delays=[1, 2])
 
         # Call the login method
-        await kem.authenticate(username, password)
+        await kem.authenticate(email, password)
 
         # Get the list of homes
         homes = await kem.get_homes()
@@ -66,9 +53,9 @@ async def main(username: str, password: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python sample.py <username> <password>")
+        print("Usage: python sample.py <email> <password>")
         sys.exit(1)
 
-    username = sys.argv[1]
+    email = sys.argv[1]
     password = sys.argv[2]
-    asyncio.run(main(username, password))
+    asyncio.run(main(email, password))
