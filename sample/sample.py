@@ -18,29 +18,16 @@ logging.basicConfig(
 class MyAioKem(AioKem):
     """Custom AioKem class to handle authentication and data retrieval."""
 
-    def __init__(self, session: ClientSession, email: str, password: str) -> None:
-        super().__init__(session=session)
-        self.email = email
-        self.password = password
-
     async def on_refresh_token_update(self, refresh_token: str | None) -> None:
         """Handle the refresh token update."""
         _LOGGER.info("Refresh token updated: %s", refresh_token)
-
-    def get_email(self) -> str:
-        """Return the email for authentication when required by retries."""
-        return email
-
-    def get_password(self) -> str:
-        """Return the password for authentication when required by retries."""
-        return password
 
 
 async def main(email: str, password: str) -> None:
     """Main function to demonstrate the usage of AioKem."""
     # Create an instance of AioKem
     async with ClientSession() as session:
-        kem = MyAioKem(session=session, email=email, password=password)
+        kem = MyAioKem(session=session)
         # Retry 2x with 1 and 2 seconds delays
         kem.set_retry_policy(retry_count=2, retry_delays=[1, 2])
 
