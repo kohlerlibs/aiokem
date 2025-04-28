@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
+import jwt
 from aiohttp import (
     ClientConnectionError,
     ClientConnectorError,
@@ -280,3 +281,15 @@ class AioKem:
         self._session = None
         self._token = None
         self._refresh_token = None
+
+    def get_token_subject(self) -> str | None:
+        """Returns the subject of the JWT token, used as unique id for the user."""
+        if not self._token:
+            raise AuthenticationError("Not authenticated")
+        # Decode the JWT token and extract the subject
+        try:
+            token_data = jwt.decode(self._token, options={"verify_signature": False})
+        except jwt.DecodeError as e:
+            _LOGGER.error("Failed to decode JWT token: %s", e)
+            return None
+        return token_data.get("sub", None)
