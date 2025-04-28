@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.4 (2025-04-28)
+
+### Bug fixes
+
+- Refactor authenticate (#21) ([`9c7a4a2`](https://github.com/kohlerlibs/aiokem/commit/9c7a4a20f208204df76e0fb86f4fbf976a2a091e))
+
 ## v0.5.3 (2025-04-26)
 
 ### Bug fixes
