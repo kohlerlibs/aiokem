@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
@@ -59,7 +59,7 @@ RETRY_EXCEPTIONS = (
 AUTHORIZATION_EXCEPTIONS = (AuthenticationError,)
 
 
-class AioKem(ABC):
+class AioKem:
     """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
     def __init__(self, session: ClientSession) -> None:
@@ -78,14 +78,6 @@ class AioKem(ABC):
         self._retry_count: int = 0
         self._retry_delays: list[int] = []
         self._refresh_lock = asyncio.Lock()
-
-    @abstractmethod
-    def get_username(self) -> str:
-        """Implement in the derived class."""
-
-    @abstractmethod
-    def get_password(self) -> str:
-        """Implement in the derived class."""
 
     def set_retry_policy(self, retry_count: int, retry_delays: list[int]) -> None:
         """
@@ -146,13 +138,21 @@ class AioKem(ABC):
             datetime.now() + timedelta(seconds=self._token_expires_in),
         )
 
-    async def authenticate(self, username: str, password: str) -> None:
+    async def authenticate(
+        self, email: str, password: str, refresh_token: str | None = None
+    ) -> None:
         """Login to the server."""
-        _LOGGER.debug("Authenticating user %s", username)
+        _LOGGER.debug("Authenticating user %s", email)
+        self.email = email
+        self.password = password
+        if refresh_token:
+            with contextlib.suppress(AuthenticationError):
+                await self.authenticate_with_refresh_token(refresh_token)
+                return
         await self._authentication_helper(
             {
                 "grant_type": "password",
-                "username": username,
+                "username": email,
                 "password": password,
                 "scope": "openid profile offline_access email",
             }
@@ -227,9 +227,7 @@ class AioKem(ABC):
         """Retry authentication."""
         _LOGGER.debug("Retrying authentication")
         try:
-            username = self.get_username()
-            password = self.get_password()
-            await self.authenticate(username=username, password=password)
+            await self.authenticate(email=self.email, password=self.password)
         except AuthenticationError as error:
             _LOGGER.error("Authentication failed: %s", error)
             return False
