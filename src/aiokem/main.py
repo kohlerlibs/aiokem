@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import Any
@@ -79,6 +80,9 @@ class AioKem:
         self._retry_count: int = 0
         self._retry_delays: list[int] = []
         self._refresh_lock = asyncio.Lock()
+        self.refresh_token_callable: Callable[[str | None], Awaitable[None]] | None = (
+            None
+        )
 
     def set_retry_policy(self, retry_count: int, retry_delays: list[int]) -> None:
         """
@@ -92,10 +96,29 @@ class AioKem:
         self._retry_count = retry_count
         self._retry_delays = retry_delays
 
+    def set_refresh_token_callback(
+        self, callback: Callable[[str | None], Awaitable[None]]
+    ) -> None:
+        """
+        Set the callback for refresh token updates.
+
+        Args:
+            callback (callable): Callback function to be called when the refresh
+            token updates.
+            The function should accept a single argument, which is the new
+            refresh token.
+
+        """
+        self.refresh_token_callable = callback
+
     async def on_refresh_token_update(self, refresh_token: str | None) -> None:
-        """Callback for refresh token update."""
-        # This method can be overridden to handle refresh token updates
-        _LOGGER.debug("Refresh token updated: %s", refresh_token)
+        """Execute the registered callback."""
+        if self.refresh_token_callable:
+            try:
+                _LOGGER.debug("Calling refresh token callback")
+                await self.refresh_token_callable(refresh_token)
+            except Exception as e:
+                _LOGGER.error("Error in refresh token callback: %s", e)
 
     async def _authentication_helper(self, data: dict[str, Any]) -> None:
         """Helper function for authentication."""
@@ -278,6 +301,7 @@ class AioKem:
     async def close(self) -> None:
         """Close the session."""
         _LOGGER.debug("Closing AioKem.")
+        self.refresh_token_callable = None
         self._session = None
         self._token = None
         self._refresh_token = None
