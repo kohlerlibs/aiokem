@@ -15,21 +15,19 @@ logging.basicConfig(
 )
 
 
-class MyAioKem(AioKem):
-    """Custom AioKem class to handle authentication and data retrieval."""
-
-    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
-        """Handle the refresh token update."""
-        _LOGGER.info("Refresh token updated: %s", refresh_token)
+async def on_refresh_token_update(refresh_token: str | None) -> None:
+    """Handle the refresh token update."""
+    _LOGGER.info("Refresh token updated: %s", refresh_token)
 
 
 async def main(email: str, password: str) -> None:
     """Main function to demonstrate the usage of AioKem."""
     # Create an instance of AioKem
     async with ClientSession() as session:
-        kem = MyAioKem(session=session)
+        kem = AioKem(session=session)
         # Retry 2x with 1 and 2 seconds delays
         kem.set_retry_policy(retry_count=2, retry_delays=[1, 2])
+        kem.set_refresh_token_callback(on_refresh_token_update)
 
         # Call the login method
         await kem.authenticate(email, password)
