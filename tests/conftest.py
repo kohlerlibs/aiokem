@@ -15,8 +15,9 @@ class TestAioKem(AioKem):
         super().__init__(session=session)
         self.refreshed = False
         self.refreshed_token: str | None = None
+        self.set_refresh_token_callback(self.refresh_token_update)
 
-    async def on_refresh_token_update(self, refresh_token: str | None) -> None:
+    async def refresh_token_update(self, refresh_token: str | None) -> None:
         """Override the refresh token update method."""
         self.refreshed = True
         self.refreshed_token = refresh_token
