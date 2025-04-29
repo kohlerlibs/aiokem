@@ -3,6 +3,7 @@ import time
 from http import HTTPStatus
 from unittest.mock import AsyncMock, Mock
 
+import jwt
 import pytest
 from aiohttp import ClientConnectionError
 
@@ -331,3 +332,24 @@ async def test_retries() -> None:
 
     assert mock_session.post.call_count == 1
     assert mock_session.get.call_count == 1
+
+
+async def test_get_subject() -> None:
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    # The mock token is not a JWT, so the subject should be None
+    subject = kem.get_token_subject()
+    assert subject is None
+
+    subject_email = "myemail@email.com"
+    # Create a fake token with a subject.
+    payload = {
+        "sub": subject_email,
+        "name": "John Doe",
+        "iat": int(time.time()),  # Issued at
+        "exp": int(time.time()) + 3600,  # Expiration time (1 hour from now)
+    }
+    secret_key = "your-secret-key"  # noqa: S105
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
+    kem._token = token
+    assert kem.get_token_subject() == subject_email
