@@ -301,6 +301,7 @@ class AioKem:
     async def close(self) -> None:
         """Close the session."""
         _LOGGER.debug("Closing AioKem.")
+        self.refresh_token_callable = None
         self._session = None
         self._token = None
         self._refresh_token = None
