@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.5 (2025-04-29)
+
+### Bug fixes
+
+- Return subject as unique id (#23) ([`039719a`](https://github.com/kohlerlibs/aiokem/commit/039719a2d387ba70255c1727ee21149ea427c5bd))
+
 ## v0.5.4 (2025-04-28)
 
 ### Bug fixes
