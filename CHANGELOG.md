@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.6 (2025-04-29)
+
+### Bug fixes
+
+- Use callback rather than inheritance (#24) ([`74a4a0c`](https://github.com/kohlerlibs/aiokem/commit/74a4a0c2a6b63045e9a67db8c95d24fc6cdd8c81))
+
 ## v0.5.5 (2025-04-29)
 
 ### Bug fixes
