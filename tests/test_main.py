@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock
 
 import jwt
 import pytest
-from aiohttp import ClientConnectionError, ContentTypeError
+from aiohttp import ClientConnectionError, ContentTypeError, hdrs
 
 from aiokem.exceptions import (
     AuthenticationCredentialsError,
@@ -270,9 +270,7 @@ async def test_close() -> None:
     assert kem._session is None
 
 
-async def test_retries(
-    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
-) -> None:
+async def test_retries_1() -> None:
     # Test a single error with no retry policy
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -282,6 +280,11 @@ async def test_retries(
     with pytest.raises(CommunicationError):
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
+
+
+async def test_retries_2(caplog: pytest.LogCaptureFixture) -> None:
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
 
     # Test a retryable error with a retry policy
     kem.set_retry_policy(3, [0, 0, 0])
@@ -294,7 +297,11 @@ async def test_retries(
         assert mock_session.get.call_count == 4
         assert "Comms error" in caplog.text
 
-    # Test a non-retryable error
+
+async def test_retries_3(caplog: pytest.LogCaptureFixture) -> None:
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_retry_policy(3, [0, 0, 0])
     mock_session.get.side_effect = ValueError("An exception")
     mock_session.get.reset_mock()
 
@@ -305,6 +312,13 @@ async def test_retries(
 
     assert mock_session.get.call_count == 1
 
+
+async def test_retries_4(
+    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+) -> None:
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_retry_policy(3, [0, 0, 0])
     # Test an authentication error
     # This should result in reauthenticating.
     mock_response = AsyncMock()
@@ -323,6 +337,14 @@ async def test_retries(
     assert mock_session.get.call_count == 2
     assert mock_session.post.call_count == 1
 
+
+async def test_retries_5(
+    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+) -> None:
+    # Test a single error with no retry policy
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+
     # Test a persistent authentication error
     # This should result in failure with no retries.
     mock_session.post.reset_mock()
@@ -340,6 +362,14 @@ async def test_retries(
 
     assert mock_session.post.call_count == 1
     assert mock_session.get.call_count == 1
+
+
+async def test_retries_6(
+    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+) -> None:
+    # Test a single error with no retry policy
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
 
     # Test an http status code error
     kem.set_retry_policy(3, [0, 0, 0])
@@ -364,17 +394,25 @@ async def test_retries(
         await kem.get_generator_data(12345)
     assert "error_description: Internal server error." in caplog.text
 
+
+async def test_retries_7(caplog: pytest.LogCaptureFixture) -> None:
+    # Test a single error with no retry policy
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
     # Test a content decode error
     kem.set_retry_policy(1, [0, 0, 0])
     mock_session.get.reset_mock()
     mock_response = AsyncMock()
     mock_response.status = 200
     mock_response.json.side_effect = ContentTypeError(Mock(), "plain text response")
-    mock_session.get.side_effect = mock_response
+    mock_response.headers = {hdrs.CONTENT_TYPE: "text/plain"}
+    mock_session.get.return_value = mock_response
+
     with caplog.at_level(logging.ERROR), pytest.raises(CommunicationError):
         caplog.clear()
         await kem.get_generator_data(12345)
         assert "plain text response" in caplog.text
+        assert "text/plain" in caplog.text
 
 
 async def test_get_subject() -> None:
