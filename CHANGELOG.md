@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.8 (2025-05-02)
+
+### Bug fixes
+
+- Reverse mac address (#28) ([`26e45cc`](https://github.com/kohlerlibs/aiokem/commit/26e45cc86491094e09202efbcb51d3b1f78ef3f1))
+
 ## v0.5.7 (2025-05-02)
 
 ### Bug fixes
