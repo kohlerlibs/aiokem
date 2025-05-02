@@ -17,6 +17,7 @@ from aiohttp import (
     ClientConnectorError,
     ClientSession,
     ClientTimeout,
+    ContentTypeError,
     hdrs,
 )
 from multidict import CIMultiDict, istr
@@ -224,28 +225,31 @@ class AioKem:
             }
         )
         _LOGGER.debug("Sending GET request to %s", url)
+
         try:
             response = await self._session.get(url, headers=headers)
-            response_data = await response.json()
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
 
-        if _LOGGER.isEnabledFor(logging.DEBUG):
-            log_json_message(response_data)
-
-        if response.status != 200:
-            if response.status == HTTPStatus.UNAUTHORIZED:
-                raise AuthenticationError(f"Unauthorized: {response_data}")
-            elif response.status == HTTPStatus.INTERNAL_SERVER_ERROR:
-                raise ServerError(
-                    f"Server error: {response_data.get('error_description', 'unknown')}"
-                )
-            else:
+        if response.status == HTTPStatus.OK:
+            try:
+                response_data = await response.json()
+                if _LOGGER.isEnabledFor(logging.DEBUG):
+                    log_json_message(response_data)
+                _LOGGER.debug("Data successfully fetched from %s", url)
+                return response_data
+            except ContentTypeError as e:
                 raise CommunicationError(
-                    f"Failed to fetch data: {response.status} {response_data}"
-                )
-        _LOGGER.debug("Data successfully fetched from %s", url)
-        return response_data
+                    f"Failed to parse response: {e} "
+                    f"Content-Type: {response.headers.get(hdrs.CONTENT_TYPE)}"
+                    f"Text: {await response.text()}"
+                ) from e
+
+        response_data = await response.text()
+        if response.status == HTTPStatus.UNAUTHORIZED:
+            raise AuthenticationError(f"Unauthorized: {response_data}")
+        else:
+            raise ServerError(f"Status: {response.status} Response: {response_data}")
 
     async def _retry_auth(self) -> bool:
         """Retry authentication."""
@@ -262,18 +266,23 @@ class AioKem:
     ) -> dict[str, Any] | list[dict[str, Any]]:
         """Retry GET request with exponential backoff."""
         await self.check_and_refresh_token()
+        last_error = None
         for attempt in range(self._retry_count + 1):
             if attempt > 0:
                 await asyncio.sleep(self._retry_delays[attempt - 1])
             try:
                 return await self._get_helper(url)
             except RETRY_EXCEPTIONS as error:
-                _LOGGER.warning("Error communicating with KEM: %s", error)
+                last_error = error
+                _LOGGER.debug("Retryable exception: %s", error)
             except AUTHORIZATION_EXCEPTIONS as error:
-                _LOGGER.warning("Authorization error communicating with KEM: %s", error)
+                _LOGGER.debug("Authorization error communicating with KEM: %s", error)
+                last_error = error
                 if not await self._retry_auth():
                     raise AuthenticationError("Retry authentication failed") from error
-        _LOGGER.error("Failed to get data after %s retries", attempt)
+        _LOGGER.error(
+            "Failed to get data after %s retries, error %s", attempt, last_error
+        )
         raise CommunicationError("Failed to get data after retries")
 
     async def get_homes(self) -> list[dict[str, Any]]:
