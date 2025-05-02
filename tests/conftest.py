@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 from aiokem.main import AioKem
 
 
-class TestAioKem(AioKem):
+class MyAioKem(AioKem):
     """Test class for AioKem."""
 
     def __init__(self, session: Mock) -> None:
@@ -27,7 +27,7 @@ async def get_kem(mock_session: Mock) -> AioKem:
     """Fixture to create a mock session and authenticate."""
     mock_session.post = AsyncMock()
     mock_session.get = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()

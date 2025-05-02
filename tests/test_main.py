@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, Mock
 import jwt
 import pytest
 from aiohttp import ClientConnectionError
+from syrupy import SnapshotAssertion
 
 from aiokem.exceptions import (
     AuthenticationCredentialsError,
@@ -14,7 +15,7 @@ from aiokem.exceptions import (
 )
 from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL
 from aiokem.message_logger import REDACTED
-from tests.conftest import TestAioKem, get_kem, load_fixture_file
+from tests.conftest import MyAioKem, get_kem, load_fixture_file
 
 
 async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
@@ -22,7 +23,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -62,7 +63,7 @@ async def test_authenticate_with_refresh_token() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -98,7 +99,7 @@ async def test_refresh_token_callback() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -121,7 +122,7 @@ async def test_authenticate_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.post = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # Mock the response for the login method
     mock_response = AsyncMock()
@@ -195,7 +196,7 @@ async def test_get_homes_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
     mock_session.get = AsyncMock()
-    kem = TestAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session)
 
     # No token set
     with pytest.raises(AuthenticationError) as excinfo:
@@ -203,7 +204,7 @@ async def test_get_homes_exceptions() -> None:
     assert str(excinfo.value) == "Not authenticated"
 
 
-async def test_get_generator_data() -> None:
+async def test_get_generator_data(snapshot: SnapshotAssertion) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -215,7 +216,7 @@ async def test_get_generator_data() -> None:
     mock_response.json.return_value = load_fixture_file("generator_data.json")
     mock_session.get.return_value = mock_response
 
-    _ = await kem.get_generator_data(12345)
+    response = await kem.get_generator_data(12345)
 
     # Assert that the session.post method was called with the correct URL and data
     mock_session.get.assert_called_once()
@@ -227,6 +228,8 @@ async def test_get_generator_data() -> None:
         mock_session.get.call_args[1]["headers"]["authorization"]
         == f"bearer {kem._token}"
     )
+
+    assert response == snapshot
 
 
 async def test_auto_refresh_token() -> None:
