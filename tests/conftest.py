@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, Mock
 
+import pytest
+
 from aiokem.main import AioKem
 
 
@@ -49,3 +51,15 @@ def load_fixture_file(fixture_file: str) -> dict[str, Any]:
     fixtures_path = Path(__file__).parent / "fixtures" / fixture_file
     with fixtures_path.open() as f:
         return json.load(f)
+
+
+@pytest.fixture()
+def generator_data() -> dict[str, Any]:
+    """Fixture for generator data."""
+    return load_fixture_file("generator_data.json")
+
+
+@pytest.fixture()
+def mock_session() -> Mock:
+    """Fixture for a mock session."""
+    return Mock()
