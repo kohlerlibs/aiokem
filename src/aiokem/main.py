@@ -295,6 +295,11 @@ class AioKem:
             raise TypeError(
                 f"Expected a list of homes, but got a different type {type(response)}"
             )
+        for homes in response:
+            for devices in homes.get("devices", []):
+                # The mac address is reversed in the response
+                if mac_address := devices.get("macAddress"):
+                    devices["macAddress"] = reverse_mac_address(mac_address)
         return response
 
     async def get_generator_data(self, generator_id: int) -> dict[str, Any]:
