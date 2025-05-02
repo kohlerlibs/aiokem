@@ -23,6 +23,8 @@ from aiohttp import (
 from multidict import CIMultiDict, istr
 from yarl import URL
 
+from aiokem.helpers import reverse_mac_address
+
 from .exceptions import (
     AuthenticationCredentialsError,
     AuthenticationError,
@@ -305,6 +307,9 @@ class AioKem:
                 "Expected a dictionary for generator data, "
                 f"but got a different type {type(response)}"
             )
+        # The mac address is reversed in the response
+        if mac_address := response.get("device", {}).get("macAddress"):
+            response["device"]["macAddress"] = reverse_mac_address(mac_address)
         return response
 
     async def close(self) -> None:
