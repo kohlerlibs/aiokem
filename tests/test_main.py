@@ -165,7 +165,9 @@ async def test_authenticate_exceptions() -> None:
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
 
-async def test_get_homes(caplog: pytest.LogCaptureFixture) -> None:
+async def test_get_homes(
+    caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
+) -> None:
     """Tests the get_homes method."""
     # Create a mock session
     mock_session = Mock()
@@ -178,7 +180,7 @@ async def test_get_homes(caplog: pytest.LogCaptureFixture) -> None:
 
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        _ = await kem.get_homes()
+        result = await kem.get_homes()
 
     # Assert that the session.post method was called with the correct URL and data
     mock_session.get.assert_called_once()
@@ -191,6 +193,8 @@ async def test_get_homes(caplog: pytest.LogCaptureFixture) -> None:
 
     assert "Generator 1" in caplog.text
     assert REDACTED in caplog.text
+
+    assert result == snapshot
 
 
 async def test_get_homes_exceptions() -> None:
