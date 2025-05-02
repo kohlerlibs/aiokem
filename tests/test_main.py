@@ -270,27 +270,24 @@ async def test_close() -> None:
     assert kem._session is None
 
 
-async def test_retries_1() -> None:
-    # Test a single error with no retry policy
-    mock_session = Mock()
+async def test_retries_1(mock_session: Mock) -> None:
+    """Tests a single error with no retry policy."""
     kem = await get_kem(mock_session)
     kem.set_retry_policy(0, [0, 0, 0])
     mock_session.get.side_effect = CommunicationError("Comms error")
-    mock_session.get.reset_mock()
     with pytest.raises(CommunicationError):
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
 
 
-async def test_retries_2(caplog: pytest.LogCaptureFixture) -> None:
-    mock_session = Mock()
+async def test_retries_2(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:
+    """Tests a retryable error with a retry policy."""
     kem = await get_kem(mock_session)
 
-    # Test a retryable error with a retry policy
     kem.set_retry_policy(3, [0, 0, 0])
     mock_session.get.side_effect = CommunicationError("Comms error")
-    mock_session.get.reset_mock()
-    # Test a retryable error
+    # The error is pesistent, so it should be retried
+    # 3 times before failing
     with caplog.at_level(logging.ERROR), pytest.raises(CommunicationError):
         caplog.clear()
         await kem.get_generator_data(12345)
@@ -298,13 +295,14 @@ async def test_retries_2(caplog: pytest.LogCaptureFixture) -> None:
         assert "Comms error" in caplog.text
 
 
-async def test_retries_3(caplog: pytest.LogCaptureFixture) -> None:
-    mock_session = Mock()
+async def test_retries_3(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:
+    """Tests a non-retryable error."""
     kem = await get_kem(mock_session)
     kem.set_retry_policy(3, [0, 0, 0])
     mock_session.get.side_effect = ValueError("An exception")
-    mock_session.get.reset_mock()
 
+    # The error is not retryable, so it should fail immediately
+    # and not be retried
     with caplog.at_level(logging.ERROR), pytest.raises(ValueError):
         caplog.clear()
         await kem.get_generator_data(12345)
@@ -314,22 +312,25 @@ async def test_retries_3(caplog: pytest.LogCaptureFixture) -> None:
 
 
 async def test_retries_4(
-    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+    mock_session: Mock, generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
 ) -> None:
-    mock_session = Mock()
+    """Test a rety error with an authentication error."""
     kem = await get_kem(mock_session)
     kem.set_retry_policy(3, [0, 0, 0])
-    # Test an authentication error
-    # This should result in reauthenticating.
-    mock_response = AsyncMock()
-    mock_response.status = 200
-    mock_response.json.return_value = generator_data
-    mock_session.get.reset_mock()
-    mock_session.get.side_effect = [
-        AuthenticationError("An exception"),
-        mock_response,
-    ]
+    first_mock_response = AsyncMock()
+    first_mock_response.status = HTTPStatus.UNAUTHORIZED
+    first_mock_response.text.return_value = "error_description: Unauthorized."
+    second_mock_response = AsyncMock()
+    second_mock_response.status = HTTPStatus.OK
+    second_mock_response.json.return_value = generator_data
+    mock_session.get.side_effect = [first_mock_response, second_mock_response]
     mock_session.post.reset_mock()
+
+    # This should result in a call to authenticate
+    # and then a call to get_generator_data
+    # The first call to get_generator_data should fail
+    # with an authentication error, which should be retried
+    # and then succeed.
 
     response = await kem.get_generator_data(12345)
 
@@ -339,14 +340,10 @@ async def test_retries_4(
 
 
 async def test_retries_5(
-    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+    mock_session: Mock, generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
 ) -> None:
-    # Test a single error with no retry policy
-    mock_session = Mock()
     kem = await get_kem(mock_session)
 
-    # Test a persistent authentication error
-    # This should result in failure with no retries.
     mock_session.post.reset_mock()
     mock_session.post.side_effect = AuthenticationError("Unauthorized")
     mock_session.get.reset_mock()
@@ -355,6 +352,8 @@ async def test_retries_5(
         generator_data,
     ]
 
+    # The first call will fail with an authentication error, authentication
+    # will be retried and fail and unauthorized error will be raised.
     with caplog.at_level(logging.ERROR), pytest.raises(AuthenticationError):
         caplog.clear()
         await kem.get_generator_data(12345)
@@ -365,23 +364,22 @@ async def test_retries_5(
 
 
 async def test_retries_6(
-    generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
+    mock_session: Mock, generator_data: dict[str, Any], caplog: pytest.LogCaptureFixture
 ) -> None:
-    # Test a single error with no retry policy
-    mock_session = Mock()
+    """Tests an http status code error with a retry policy."""
     kem = await get_kem(mock_session)
 
-    # Test an http status code error
     kem.set_retry_policy(3, [0, 0, 0])
     mock_session.get.reset_mock()
     first_mock_response = AsyncMock()
-    first_mock_response.status = 500
+    first_mock_response.status = HTTPStatus.INTERNAL_SERVER_ERROR
     first_mock_response.text.return_value = "error_description: Internal server error."
     second_mock_response = AsyncMock()
-    second_mock_response.status = 200
+    second_mock_response.status = HTTPStatus.OK
     second_mock_response.json.return_value = generator_data
     mock_session.get.side_effect = [first_mock_response, second_mock_response]
-    # No error should be logged since the retry was successful
+    # The 500 error should be retried and then succeed, no
+    # error should be logged.
     with caplog.at_level(logging.ERROR):
         caplog.clear()
         await kem.get_generator_data(12345)
@@ -395,11 +393,9 @@ async def test_retries_6(
     assert "error_description: Internal server error." in caplog.text
 
 
-async def test_retries_7(caplog: pytest.LogCaptureFixture) -> None:
-    # Test a single error with no retry policy
-    mock_session = Mock()
+async def test_retries_7(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:
+    """Test a content decode error."""
     kem = await get_kem(mock_session)
-    # Test a content decode error
     kem.set_retry_policy(1, [0, 0, 0])
     mock_session.get.reset_mock()
     mock_response = AsyncMock()

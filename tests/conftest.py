@@ -57,3 +57,9 @@ def load_fixture_file(fixture_file: str) -> dict[str, Any]:
 def generator_data() -> dict[str, Any]:
     """Fixture for generator data."""
     return load_fixture_file("generator_data.json")
+
+
+@pytest.fixture()
+def mock_session() -> Mock:
+    """Fixture for a mock session."""
+    return Mock()
