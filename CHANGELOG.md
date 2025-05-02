@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.9 (2025-05-02)
+
+### Bug fixes
+
+- Reverse mac address in homes (#29) ([`64c8011`](https://github.com/kohlerlibs/aiokem/commit/64c801195c84e0ea220389ab63ffd7b1b7094743))
+
 ## v0.5.8 (2025-05-02)
 
 ### Bug fixes
