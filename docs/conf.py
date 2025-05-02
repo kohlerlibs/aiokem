@@ -15,7 +15,7 @@ from sphinx.ext import apidoc
 project = "aiokem"
 copyright = "2025, J. Nick Koston"
 author = "J. Nick Koston"
-release = "0.5.6"
+release = "0.5.7"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

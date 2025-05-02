@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.7 (2025-05-02)
+
+### Bug fixes
+
+- Retries (#26) ([`5b6616c`](https://github.com/kohlerlibs/aiokem/commit/5b6616cc15e1895cd32132766894a61033aa90aa))
+
 ## v0.5.6 (2025-04-29)
 
 ### Bug fixes
