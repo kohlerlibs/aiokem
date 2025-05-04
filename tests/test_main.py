@@ -14,7 +14,13 @@ from aiokem.exceptions import (
     AuthenticationError,
     CommunicationError,
 )
-from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL
+from aiokem.main import (
+    API_BASE,
+    API_KEY,
+    AUTHENTICATION_URL,
+    DEFAULT_CLIENT_TIMEOUT,
+    HOMES_URL,
+)
 from aiokem.message_logger import REDACTED
 from tests.conftest import MyAioKem, get_kem, load_fixture_file
 
@@ -54,6 +60,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
         "password": "password",
         "scope": "openid profile offline_access email",
     }
+    assert mock_session.post.call_args.kwargs["timeout"] == DEFAULT_CLIENT_TIMEOUT
 
     assert '"access_token": "**redacted**"' in caplog.text
     assert '"refresh_token": "**redacted**"' in caplog.text
@@ -172,6 +179,7 @@ async def test_get_homes(
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
+    kem.set_timeout(5)
     # Mock the response for the get_homes method
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -190,6 +198,7 @@ async def test_get_homes(
         mock_session.get.call_args[1]["headers"]["authorization"]
         == f"bearer {kem._token}"
     )
+    assert mock_session.get.call_args.kwargs["timeout"].total == 5
 
     assert "Generator 1" in caplog.text
     assert REDACTED in caplog.text
