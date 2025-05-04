@@ -14,7 +14,13 @@ from aiokem.exceptions import (
     AuthenticationError,
     CommunicationError,
 )
-from aiokem.main import API_BASE, API_KEY, AUTHENTICATION_URL, HOMES_URL
+from aiokem.main import (
+    API_BASE,
+    API_KEY,
+    AUTHENTICATION_URL,
+    DEFAULT_CLIENT_TIMEOUT,
+    HOMES_URL,
+)
 from aiokem.message_logger import REDACTED
 from tests.conftest import MyAioKem, get_kem, load_fixture_file
 
@@ -54,6 +60,7 @@ async def test_authenticate(caplog: pytest.LogCaptureFixture) -> None:
         "password": "password",
         "scope": "openid profile offline_access email",
     }
+    assert mock_session.post.call_args.kwargs["timeout"] == DEFAULT_CLIENT_TIMEOUT
 
     assert '"access_token": "**redacted**"' in caplog.text
     assert '"refresh_token": "**redacted**"' in caplog.text
@@ -164,6 +171,13 @@ async def test_authenticate_exceptions() -> None:
         await kem.authenticate("email", "password")
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
+    mock_session.post.side_effect = TimeoutError("Request timed out")
+
+    # Call the login method
+    with pytest.raises(CommunicationError) as excinfo:
+        await kem.authenticate("email", "password")
+    assert str(excinfo.value) == "Timeout error: Request timed out"
+
 
 async def test_get_homes(
     caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
@@ -172,6 +186,7 @@ async def test_get_homes(
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
+    kem.set_timeout(5)
     # Mock the response for the get_homes method
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -190,6 +205,7 @@ async def test_get_homes(
         mock_session.get.call_args[1]["headers"]["authorization"]
         == f"bearer {kem._token}"
     )
+    assert mock_session.get.call_args.kwargs["timeout"].total == 5
 
     assert "Generator 1" in caplog.text
     assert REDACTED in caplog.text
@@ -281,10 +297,18 @@ async def test_retries_1(mock_session: Mock) -> None:
     """Tests a single error with no retry policy."""
     kem = await get_kem(mock_session)
     kem.set_retry_policy(0, [0, 0, 0])
-    mock_session.get.side_effect = CommunicationError("Comms error")
-    with pytest.raises(CommunicationError):
+    mock_session.get.side_effect = ClientConnectionError("Comms error")
+    with pytest.raises(CommunicationError) as excinfo:
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
+    assert "Connection error: Comms error" in str(excinfo.value)
+
+    mock_session.get.reset_mock()
+    mock_session.get.side_effect = TimeoutError("Request timed out")
+    with pytest.raises(CommunicationError) as excinfo:
+        await kem.get_generator_data(12345)
+    assert mock_session.get.call_count == 1
+    assert "Timeout error: Request timed out" in str(excinfo.value)
 
 
 async def test_retries_2(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:

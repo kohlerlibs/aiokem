@@ -53,7 +53,7 @@ AUTH_HEADERS = CIMultiDict(
         hdrs.CONTENT_TYPE: "application/x-www-form-urlencoded",
     }
 )
-CLIENT_TIMEOUT = ClientTimeout(total=10)
+DEFAULT_CLIENT_TIMEOUT = ClientTimeout(total=20)
 
 RETRY_EXCEPTIONS = (
     CommunicationError,
@@ -86,6 +86,18 @@ class AioKem:
         self.refresh_token_callable: Callable[[str | None], Awaitable[None]] | None = (
             None
         )
+        self._timeout = DEFAULT_CLIENT_TIMEOUT
+
+    def set_timeout(self, timeout: int) -> None:
+        """
+        Set the timeout for the session.
+
+        Args:
+            timeout (int): Timeout in seconds.
+
+        """
+        self._timeout = ClientTimeout(total=timeout)
+        _LOGGER.debug("Timeout set to %s seconds", timeout)
 
     def set_retry_policy(self, retry_count: int, retry_delays: list[int]) -> None:
         """
@@ -128,11 +140,16 @@ class AioKem:
         _LOGGER.debug("Sending authentication request to %s", AUTHENTICATION_URL)
         try:
             response = await self._session.post(
-                AUTHENTICATION_URL, headers=AUTH_HEADERS, data=data
+                AUTHENTICATION_URL,
+                headers=AUTH_HEADERS,
+                data=data,
+                timeout=self._timeout,
             )
             response_data = await response.json()
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+        except TimeoutError as e:
+            raise CommunicationError(f"Timeout error: {e}") from e
 
         if _LOGGER.isEnabledFor(logging.DEBUG):
             log_json_message(response_data)
@@ -229,9 +246,13 @@ class AioKem:
         _LOGGER.debug("Sending GET request to %s", url)
 
         try:
-            response = await self._session.get(url, headers=headers)
+            response = await self._session.get(
+                url, headers=headers, timeout=self._timeout
+            )
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+        except TimeoutError as e:
+            raise CommunicationError(f"Timeout error: {e}") from e
 
         if response.status == HTTPStatus.OK:
             try:
@@ -285,7 +306,9 @@ class AioKem:
         _LOGGER.error(
             "Failed to get data after %s retries, error %s", attempt, last_error
         )
-        raise CommunicationError("Failed to get data after retries")
+        raise CommunicationError(
+            f"Failed to get data after {attempt} retries, error {last_error}"
+        ) from last_error
 
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
