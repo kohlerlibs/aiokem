@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.10 (2025-05-04)
+
+### Bug fixes
+
+- Set client timeout (#30) ([`8e1358c`](https://github.com/kohlerlibs/aiokem/commit/8e1358ccc4a5b81fccd9f1f1fba1ff67154277ed))
+
 ## v0.5.9 (2025-05-02)
 
 ### Bug fixes

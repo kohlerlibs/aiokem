@@ -1,4 +1,4 @@
-__version__ = "0.5.9"
+__version__ = "0.5.10"
 
 from .exceptions import (
     AioKemError,
