@@ -148,6 +148,8 @@ class AioKem:
             response_data = await response.json()
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+        except TimeoutError as e:
+            raise CommunicationError(f"Timeout error: {e}") from e
 
         if _LOGGER.isEnabledFor(logging.DEBUG):
             log_json_message(response_data)
@@ -249,6 +251,8 @@ class AioKem:
             )
         except ClientConnectionError as e:
             raise CommunicationError(f"Connection error: {e}") from e
+        except TimeoutError as e:
+            raise CommunicationError(f"Timeout error: {e}") from e
 
         if response.status == HTTPStatus.OK:
             try:
