@@ -171,6 +171,13 @@ async def test_authenticate_exceptions() -> None:
         await kem.authenticate("email", "password")
     assert str(excinfo.value) == "Connection error: Internet connection error"
 
+    mock_session.post.side_effect = TimeoutError("Request timed out")
+
+    # Call the login method
+    with pytest.raises(CommunicationError) as excinfo:
+        await kem.authenticate("email", "password")
+    assert str(excinfo.value) == "Timeout error: Request timed out"
+
 
 async def test_get_homes(
     caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
@@ -291,9 +298,17 @@ async def test_retries_1(mock_session: Mock) -> None:
     kem = await get_kem(mock_session)
     kem.set_retry_policy(0, [0, 0, 0])
     mock_session.get.side_effect = CommunicationError("Comms error")
-    with pytest.raises(CommunicationError):
+    with pytest.raises(CommunicationError) as excinfo:
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
+    assert str(excinfo.value) == "Connection error: Comms error"
+
+    mock_session.get.reset_mock()
+    mock_session.get.side_effect = TimeoutError("Request timed out")
+    with pytest.raises(CommunicationError) as excinfo:
+        await kem.get_generator_data(12345)
+    assert mock_session.get.call_count == 1
+    assert str(excinfo.value) == "Timeout error: Request timed out"
 
 
 async def test_retries_2(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:
