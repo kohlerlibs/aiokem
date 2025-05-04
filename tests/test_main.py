@@ -297,18 +297,18 @@ async def test_retries_1(mock_session: Mock) -> None:
     """Tests a single error with no retry policy."""
     kem = await get_kem(mock_session)
     kem.set_retry_policy(0, [0, 0, 0])
-    mock_session.get.side_effect = CommunicationError("Comms error")
+    mock_session.get.side_effect = ClientConnectionError("Comms error")
     with pytest.raises(CommunicationError) as excinfo:
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
-    assert str(excinfo.value) == "Connection error: Comms error"
+    assert "Connection error: Comms error" in str(excinfo.value)
 
     mock_session.get.reset_mock()
     mock_session.get.side_effect = TimeoutError("Request timed out")
     with pytest.raises(CommunicationError) as excinfo:
         await kem.get_generator_data(12345)
     assert mock_session.get.call_count == 1
-    assert str(excinfo.value) == "Timeout error: Request timed out"
+    assert "Timeout error: Request timed out" in str(excinfo.value)
 
 
 async def test_retries_2(mock_session: Mock, caplog: pytest.LogCaptureFixture) -> None:

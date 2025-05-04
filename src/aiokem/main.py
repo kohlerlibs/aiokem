@@ -306,7 +306,9 @@ class AioKem:
         _LOGGER.error(
             "Failed to get data after %s retries, error %s", attempt, last_error
         )
-        raise CommunicationError("Failed to get data after retries")
+        raise CommunicationError(
+            f"Failed to get data after {attempt} retries, error {last_error}"
+        ) from last_error
 
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
