@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.11 (2025-05-20)
+
+### Bug fixes
+
+- Adjust timestamps with no time-zone (#34) ([`cb33173`](https://github.com/kohlerlibs/aiokem/commit/cb331739757b06e6525365e9db141a3c4a67e2d3))
+
 ## v0.5.10 (2025-05-04)
 
 ### Bug fixes
