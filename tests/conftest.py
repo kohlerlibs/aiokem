@@ -1,9 +1,11 @@
 """Fixtures for testing."""
 
 import json
+from datetime import UTC, tzinfo
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, Mock
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -13,8 +15,8 @@ from aiokem.main import AioKem
 class MyAioKem(AioKem):
     """Test class for AioKem."""
 
-    def __init__(self, session: Mock) -> None:
-        super().__init__(session=session)
+    def __init__(self, session: Mock, home_timezone: tzinfo = UTC) -> None:
+        super().__init__(session=session, home_timezone=home_timezone)
         self.refreshed = False
         self.refreshed_token: str | None = None
         self.set_refresh_token_callback(self.refresh_token_update)
@@ -29,7 +31,7 @@ async def get_kem(mock_session: Mock) -> AioKem:
     """Fixture to create a mock session and authenticate."""
     mock_session.post = AsyncMock()
     mock_session.get = AsyncMock()
-    kem = MyAioKem(session=mock_session)
+    kem = MyAioKem(session=mock_session, home_timezone=ZoneInfo("America/New_York"))
 
     # Mock the response for the login method
     mock_response = AsyncMock()

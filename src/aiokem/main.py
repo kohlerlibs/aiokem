@@ -7,7 +7,7 @@ import contextlib
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from http import HTTPStatus
 from typing import Any
 
@@ -23,7 +23,7 @@ from aiohttp import (
 from multidict import CIMultiDict, istr
 from yarl import URL
 
-from aiokem.helpers import reverse_mac_address
+from aiokem.helpers import convert_timestamp, reverse_mac_address
 
 from .exceptions import (
     AuthenticationCredentialsError,
@@ -67,12 +67,13 @@ AUTHORIZATION_EXCEPTIONS = (AuthenticationError,)
 class AioKem:
     """AioKem class for interacting with Kohler Energy Management System (KEM) API."""
 
-    def __init__(self, session: ClientSession) -> None:
+    def __init__(self, session: ClientSession, home_timezone: tzinfo = UTC) -> None:
         """
         Initialize the AioKem class.
 
         Args:
             session (ClientSession): An aiohttp ClientSession object.
+            home_timezone (tzinfo): The timezone used to convert local timestamps.
 
         """
         self._token: str | None = None
@@ -87,6 +88,7 @@ class AioKem:
             None
         )
         self._timeout = DEFAULT_CLIENT_TIMEOUT
+        self._home_timezone = home_timezone
 
     def set_timeout(self, timeout: int) -> None:
         """
@@ -338,6 +340,12 @@ class AioKem:
         # The mac address is reversed in the response
         if mac_address := response.get("device", {}).get("macAddress"):
             response["device"]["macAddress"] = reverse_mac_address(mac_address)
+        # These timestamps are local time without timezone info
+        convert_timestamp(
+            response.get("exercise", {}), "nextStartTimestamp", self._home_timezone
+        )
+        for k in ("lastMaintenanceTimestamp", "nextMaintenanceTimestamp"):
+            convert_timestamp(response.get("device", {}), k, self._home_timezone)
         return response
 
     async def close(self) -> None:
