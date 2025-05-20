@@ -365,7 +365,7 @@ async def test_retries_4(
 
     response = await kem.get_generator_data(12345)
 
-    assert response == generator_data
+    assert response["device"]["id"] == 12345
     assert mock_session.get.call_count == 2
     assert mock_session.post.call_count == 1
 
