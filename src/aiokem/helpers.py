@@ -18,7 +18,12 @@ def reverse_mac_address(mac: str) -> str:
 
 
 def convert_timestamp(response: dict[str, Any], key: str, tz: tzinfo) -> None:
-    """Convert a timestamp in to the specified timezone."""
+    """Convert a timestamp that does not have a tz in to the specified timezone."""
     value = response.get(key)
     if value:
-        response[key] = datetime.fromisoformat(value).replace(tzinfo=tz).isoformat()
+        dt = datetime.fromisoformat(value)
+        # Different controllers can return timestamps with or without tzinfo
+        # If tzinfo is None, we need to set it to the provided tz
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=tz)
+        response[key] = dt.isoformat()

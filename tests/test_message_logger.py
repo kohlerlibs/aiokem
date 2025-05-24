@@ -9,7 +9,7 @@ from tests.conftest import load_fixture_file
     "message_file",
     [
         "homes.json",
-        "generator_data.json",
+        "generator_data_rdc2v4.json",
     ],
 )
 async def test_message_logger(
