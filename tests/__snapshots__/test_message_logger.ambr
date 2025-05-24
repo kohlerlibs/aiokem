@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_message_logger[generator_data.json]
+# name: test_message_logger[generator_data_rdc2v4.json]
   dict({
     'addedBy': None,
     'associatedUsers': '**redacted**',

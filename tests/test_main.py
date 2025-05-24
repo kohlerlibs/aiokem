@@ -225,7 +225,12 @@ async def test_get_homes_exceptions() -> None:
     assert str(excinfo.value) == "Not authenticated"
 
 
-async def test_get_generator_data(snapshot: SnapshotAssertion) -> None:
+@pytest.mark.parametrize(
+    "fixture_file", ["generator_data_rdc2v4.json", "generator_data_rdc2.json"]
+)
+async def test_get_generator_data(
+    fixture_file: str, snapshot: SnapshotAssertion
+) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -234,7 +239,7 @@ async def test_get_generator_data(snapshot: SnapshotAssertion) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200
 
-    mock_response.json.return_value = load_fixture_file("generator_data.json")
+    mock_response.json.return_value = load_fixture_file(fixture_file)
     mock_session.get.return_value = mock_response
 
     response = await kem.get_generator_data(12345)

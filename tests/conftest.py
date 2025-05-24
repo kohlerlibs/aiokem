@@ -58,7 +58,7 @@ def load_fixture_file(fixture_file: str) -> dict[str, Any]:
 @pytest.fixture()
 def generator_data() -> dict[str, Any]:
     """Fixture for generator data."""
-    return load_fixture_file("generator_data.json")
+    return load_fixture_file("generator_data_rdc2v4.json")
 
 
 @pytest.fixture()
