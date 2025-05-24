@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.12 (2025-05-24)
+
+### Bug fixes
+
+- Timestamps across different controllers (#35) ([`cc25a2c`](https://github.com/kohlerlibs/aiokem/commit/cc25a2c4f5a9653762fd1af03e46ceaadd1d7bdc))
+
 ## v0.5.11 (2025-05-20)
 
 ### Bug fixes
