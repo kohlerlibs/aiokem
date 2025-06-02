@@ -27,3 +27,10 @@ def convert_timestamp(response: dict[str, Any], key: str, tz: tzinfo) -> None:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=tz)
         response[key] = dt.isoformat()
+
+
+def convert_number_abs(response: dict[str, Any], key: str) -> None:
+    """Convert a number to its absolute value."""
+    value = response.get(key)
+    if value is not None:
+        response[key] = abs(value)
