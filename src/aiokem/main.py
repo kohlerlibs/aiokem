@@ -23,7 +23,7 @@ from aiohttp import (
 from multidict import CIMultiDict, istr
 from yarl import URL
 
-from aiokem.helpers import convert_timestamp, reverse_mac_address
+from aiokem.helpers import convert_number_abs, convert_timestamp, reverse_mac_address
 
 from .exceptions import (
     AuthenticationCredentialsError,
@@ -346,6 +346,8 @@ class AioKem:
         )
         for k in ("lastMaintenanceTimestamp", "nextMaintenanceTimestamp"):
             convert_timestamp(response.get("device", {}), k, self._home_timezone)
+        for measurement in ("generatorLoadW", "generatorLoadPercent"):
+            convert_number_abs(response, measurement)
         return response
 
     async def close(self) -> None:
