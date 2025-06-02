@@ -4,7 +4,7 @@ requires = [ "setuptools" ]
 
 [project]
 name = "aiokem"
-version = "1.0.0"
+version = "1.0.1"
 description = "Async API for Kohler Energy Management"
 readme = "README.md"
 license = { text = "MIT" }
