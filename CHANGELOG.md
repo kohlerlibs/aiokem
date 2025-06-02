@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.1-rc.1 (2025-06-02)
+
+### Bug fixes
+
+- Power values are negative ([`8775a09`](https://github.com/kohlerlibs/aiokem/commit/8775a092309f3cd877b8e1b54df527dc51830c9e))
+
 ## v1.0.0 (2025-06-02)
 
 ## v0.5.12 (2025-05-24)
