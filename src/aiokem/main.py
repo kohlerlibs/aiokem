@@ -44,6 +44,8 @@ API_KEY = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp"
 API_KEY_HDR = istr("apikey")
 API_BASE = "https://api.hems.rehlko.com"
 API_BASE_URL = URL(API_BASE)
+ME_URL = URL(f"{API_BASE}/kem/api/v3/homeowner/me")
+NOTIFICATIONS_URL = URL(f"{API_BASE}/kem/api/v3/notifications")
 HOMES_URL = URL(f"{API_BASE}/kem/api/v3/homeowner/homes")
 
 AUTH_HEADERS = CIMultiDict(
@@ -315,8 +317,7 @@ class AioKem:
     async def get_homeowner(self) -> dict[str, Any]:
         """Get homeowner information."""
         _LOGGER.debug("Fetching homeowner information.")
-        url = API_BASE_URL.with_path("/kem/api/v3/homeowner/me")
-        response = await self._retry_get_helper(url)
+        response = await self._retry_get_helper(ME_URL)
         if not isinstance(response, dict):
             raise TypeError(
                 f"Expected an object, but got a different type {type(response)}"
@@ -326,8 +327,7 @@ class AioKem:
     async def get_notifications(self) -> list[dict[str, Any]]:
         """Get list of notifications."""
         _LOGGER.debug("Fetching notifications.")
-        url = API_BASE_URL.with_path("/kem/api/v3/notifications")
-        response = await self._retry_get_helper(url)
+        response = await self._retry_get_helper(NOTIFICATIONS_URL)
         if not isinstance(response, list):
             raise TypeError(
                 f"Expected a list of notifications, but got a different type {type(response)}"

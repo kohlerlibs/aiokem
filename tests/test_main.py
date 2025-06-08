@@ -19,6 +19,8 @@ from aiokem.main import (
     API_KEY,
     AUTHENTICATION_URL,
     DEFAULT_CLIENT_TIMEOUT,
+    ME_URL,
+    NOTIFICATIONS_URL,
     HOMES_URL,
 )
 from aiokem.message_logger import REDACTED
@@ -179,7 +181,7 @@ async def test_authenticate_exceptions() -> None:
     assert str(excinfo.value) == "Timeout error: Request timed out"
 
 
-async def test_homeowner() -> None:
+async def test_homeowner(caplog: pytest.LogCaptureFixture) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -189,13 +191,18 @@ async def test_homeowner() -> None:
     mock_response.json.return_value = load_fixture_file("me.json")
     mock_session.get.return_value = mock_response
 
-    result = await kem.get_homeowner()
+    with caplog.at_level(logging.DEBUG):
+        caplog.clear()
+        result = await kem.get_homeowner()
 
     # Assert that the session.get method was called with the correct URL and data
     mock_session.get.assert_called_once()
-    assert (
-        str(mock_session.get.call_args[0][0]) == f"{API_BASE}/kem/api/v3/homeowner/me"
-    )
+    assert mock_session.get.call_args[0][0] == ME_URL
+
+    assert '"email": "**redacted**"' in caplog.text
+    assert '"firstName": "**redacted**"' in caplog.text
+    assert '"lastName": "**redacted**"' in caplog.text
+    assert '"deviceSerialNumbers": [\n        "**redacted**"\n    ],\n' in caplog.text
 
     assert result == mock_response.json.return_value
 
@@ -214,9 +221,7 @@ async def test_get_notifications() -> None:
 
     # Assert that the session.get method was called with the correct URL and data
     mock_session.get.assert_called_once()
-    assert (
-        str(mock_session.get.call_args[0][0]) == f"{API_BASE}/kem/api/v3/notifications"
-    )
+    assert mock_session.get.call_args[0][0] == NOTIFICATIONS_URL
 
     assert result == mock_response.json.return_value
 
@@ -300,68 +305,46 @@ async def test_get_generator_data(
     assert response == snapshot
 
 
-async def test_get_alerts() -> None:
+@pytest.mark.parametrize(
+    "fixture_file,method,generator_id,expected_url",
+    (
+        (
+            "alerts_rdc2v4.json",
+            "get_alerts",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/alerts",
+        ),
+        (
+            "events_rdc2v4.json",
+            "get_events",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/events",
+        ),
+        (
+            "maintenance_notes.json",
+            "get_maintenance_notes",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/maintenance_notes",
+        ),
+    ),
+)
+async def test_generator_endpoints(
+    fixture_file: str, method: str, generator_id: int, expected_url: str
+) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
     kem.set_timeout(5)
     mock_response = AsyncMock()
     mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("alerts_rdc2v4.json")
+    mock_response.json.return_value = load_fixture_file(fixture_file)
     mock_session.get.return_value = mock_response
 
-    result = await kem.get_alerts(12345)
+    result = await getattr(kem, method)(generator_id)
 
     # Assert that the session.get method was called with the correct URL and data
     mock_session.get.assert_called_once()
-    assert (
-        str(mock_session.get.call_args[0][0])
-        == f"{API_BASE}/kem/api/v3/devices/12345/alerts"
-    )
-
-    assert result == mock_response.json.return_value
-
-
-async def test_get_events() -> None:
-    # Create a mock session
-    mock_session = Mock()
-    kem = await get_kem(mock_session)
-    kem.set_timeout(5)
-    mock_response = AsyncMock()
-    mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("events_rdc2v4.json")
-    mock_session.get.return_value = mock_response
-
-    result = await kem.get_events(12345)
-
-    # Assert that the session.get method was called with the correct URL and data
-    mock_session.get.assert_called_once()
-    assert (
-        str(mock_session.get.call_args[0][0])
-        == f"{API_BASE}/kem/api/v3/devices/12345/events"
-    )
-
-    assert result == mock_response.json.return_value
-
-
-async def test_get_maintenance_notes() -> None:
-    # Create a mock session
-    mock_session = Mock()
-    kem = await get_kem(mock_session)
-    kem.set_timeout(5)
-    mock_response = AsyncMock()
-    mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("maintenance_notes.json")
-    mock_session.get.return_value = mock_response
-
-    result = await kem.get_maintenance_notes(12345)
-
-    # Assert that the session.get method was called with the correct URL and data
-    mock_session.get.assert_called_once()
-    assert (
-        str(mock_session.get.call_args[0][0])
-        == f"{API_BASE}/kem/api/v3/devices/12345/maintenance_notes"
-    )
+    assert str(mock_session.get.call_args[0][0]) == expected_url
 
     assert result == mock_response.json.return_value
 
