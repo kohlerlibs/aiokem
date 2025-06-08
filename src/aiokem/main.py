@@ -341,8 +341,7 @@ class AioKem:
         response = await self._retry_get_helper(HOMES_URL)
         if not isinstance(response, list):
             raise TypeError(
-                "Expected a list of homes, but got a different type "
-                f"{type(response)}"
+                f"Expected a list of homes, but got a different type {type(response)}"
             )
         for homes in response:
             for devices in homes.get("devices", []):
