@@ -19,9 +19,9 @@ from aiokem.main import (
     API_KEY,
     AUTHENTICATION_URL,
     DEFAULT_CLIENT_TIMEOUT,
+    HOMES_URL,
     ME_URL,
     NOTIFICATIONS_URL,
-    HOMES_URL,
 )
 from aiokem.message_logger import REDACTED
 from tests.conftest import MyAioKem, get_kem, load_fixture_file
