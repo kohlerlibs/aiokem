@@ -361,6 +361,17 @@ class AioKem:
             )
         return response
 
+    async def get_events(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of events for a generator."""
+        _LOGGER.debug("Fetching events for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}/events")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of events, but got a different type {type(response)}"
+            )
+        return response
+
     async def close(self) -> None:
         """Close the session."""
         _LOGGER.debug("Closing AioKem.")
