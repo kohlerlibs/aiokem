@@ -350,6 +350,17 @@ class AioKem:
             convert_number_abs(response, measurement)
         return response
 
+    async def get_alerts(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of alerts for a generator."""
+        _LOGGER.debug("Fetching alerts for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}/alerts")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of alerts, but got a different type {type(response)}"
+            )
+        return response
+
     async def close(self) -> None:
         """Close the session."""
         _LOGGER.debug("Closing AioKem.")
