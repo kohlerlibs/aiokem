@@ -326,7 +326,7 @@ class AioKem:
     async def get_notifications(self) -> list[dict[str, Any]]:
         """Get list of notifications."""
         _LOGGER.debug("Fetching notifications.")
-        url = API_BASE_URL.with_path(f"/kem/api/v3/notifications")
+        url = API_BASE_URL.with_path("/kem/api/v3/notifications")
         response = await self._retry_get_helper(url)
         if not isinstance(response, list):
             raise TypeError(

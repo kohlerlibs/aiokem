@@ -4,9 +4,7 @@
   "firstName": "**redacted**",
   "lastName": "**redacted**",
   "hasAcceptedTC": true,
-  "deviceSerialNumbers": [
-    "**redacted**"
-  ],
+  "deviceSerialNumbers": ["**redacted**"],
   "hasApprovedDevices": true,
   "hasAppAccount": true,
   "hasAcceptedMarketingOutreach": true
