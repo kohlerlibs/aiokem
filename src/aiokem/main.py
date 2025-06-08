@@ -330,7 +330,8 @@ class AioKem:
         response = await self._retry_get_helper(NOTIFICATIONS_URL)
         if not isinstance(response, list):
             raise TypeError(
-                f"Expected a list of notifications, but got a different type {type(response)}"
+                "Expected a list of notifications, but got a different type "
+                f"{type(response)}"
             )
         return response
 
@@ -340,7 +341,8 @@ class AioKem:
         response = await self._retry_get_helper(HOMES_URL)
         if not isinstance(response, list):
             raise TypeError(
-                f"Expected a list of homes, but got a different type {type(response)}"
+                "Expected a list of homes, but got a different type "
+                f"{type(response)}"
             )
         for homes in response:
             for devices in homes.get("devices", []):
@@ -403,7 +405,8 @@ class AioKem:
         response = await self._retry_get_helper(url)
         if not isinstance(response, list):
             raise TypeError(
-                f"Expected a list of maintenance notes, but got a different type {type(response)}"
+                "Expected a list of maintenance notes, but got a different type "
+                f"{type(response)}"
             )
         return response
 
