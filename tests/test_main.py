@@ -302,6 +302,28 @@ async def test_get_events() -> None:
     assert result == mock_response.json.return_value
 
 
+async def test_get_maintenance_notes() -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = load_fixture_file("maintenance_notes.json")
+    mock_session.get.return_value = mock_response
+
+    result = await kem.get_maintenance_notes(12345)
+
+    # Assert that the session.get method was called with the correct URL and data
+    mock_session.get.assert_called_once()
+    assert (
+        str(mock_session.get.call_args[0][0])
+        == f"{API_BASE}/kem/api/v3/devices/12345/maintenance_notes"
+    )
+
+    assert result == mock_response.json.return_value
+
+
 async def test_auto_refresh_token() -> None:
     """Tests the auto-refresh token functionality."""
     mock_session = Mock()

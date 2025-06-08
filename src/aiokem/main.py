@@ -372,6 +372,19 @@ class AioKem:
             )
         return response
 
+    async def get_maintenance_notes(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of maintenance_notes for a generator."""
+        _LOGGER.debug("Fetching maintenance notes for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(
+            f"/kem/api/v3/devices/{generator_id}/maintenance_notes"
+        )
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of maintenance notes, but got a different type {type(response)}"
+            )
+        return response
+
     async def close(self) -> None:
         """Close the session."""
         _LOGGER.debug("Closing AioKem.")
