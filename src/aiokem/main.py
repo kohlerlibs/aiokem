@@ -312,6 +312,28 @@ class AioKem:
             f"Failed to get data after {attempt} retries, error {last_error}"
         ) from last_error
 
+    async def get_homeowner(self) -> dict[str, Any]:
+        """Get homeowner information."""
+        _LOGGER.debug("Fetching homeowner information.")
+        url = API_BASE_URL.with_path("/kem/api/v3/homeowner/me")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, dict):
+            raise TypeError(
+                f"Expected an object, but got a different type {type(response)}"
+            )
+        return response
+
+    async def get_notifications(self) -> list[dict[str, Any]]:
+        """Get list of notifications."""
+        _LOGGER.debug("Fetching notifications.")
+        url = API_BASE_URL.with_path(f"/kem/api/v3/notifications")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of notifications, but got a different type {type(response)}"
+            )
+        return response
+
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
         _LOGGER.debug("Fetching list of homes.")

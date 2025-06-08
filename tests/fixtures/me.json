@@ -1,0 +1,13 @@
+{
+  "id": 12345,
+  "email": "**redacted**",
+  "firstName": "**redacted**",
+  "lastName": "**redacted**",
+  "hasAcceptedTC": true,
+  "deviceSerialNumbers": [
+    "**redacted**"
+  ],
+  "hasApprovedDevices": true,
+  "hasAppAccount": true,
+  "hasAcceptedMarketingOutreach": true
+}

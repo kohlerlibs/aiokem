@@ -32,6 +32,14 @@ async def main(email: str, password: str) -> None:
         # Call the login method
         await kem.authenticate(email, password)
 
+        # Get account information
+        await kem.get_homeowner()
+
+        # Get notifications
+        notifications = await kem.get_notifications()
+        if len(notifications):
+            _LOGGER.info(f"Found {len(notifications)} notification(s)")
+
         # Get the list of homes
         homes = await kem.get_homes()
 

@@ -179,6 +179,48 @@ async def test_authenticate_exceptions() -> None:
     assert str(excinfo.value) == "Timeout error: Request timed out"
 
 
+async def test_homeowner() -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = load_fixture_file("me.json")
+    mock_session.get.return_value = mock_response
+
+    result = await kem.get_homeowner()
+
+    # Assert that the session.get method was called with the correct URL and data
+    mock_session.get.assert_called_once()
+    assert (
+        str(mock_session.get.call_args[0][0]) == f"{API_BASE}/kem/api/v3/homeowner/me"
+    )
+
+    assert result == mock_response.json.return_value
+
+
+async def test_get_notifications() -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = load_fixture_file("notifications.json")
+    mock_session.get.return_value = mock_response
+
+    result = await kem.get_notifications()
+
+    # Assert that the session.get method was called with the correct URL and data
+    mock_session.get.assert_called_once()
+    assert (
+        str(mock_session.get.call_args[0][0]) == f"{API_BASE}/kem/api/v3/notifications"
+    )
+
+    assert result == mock_response.json.return_value
+
+
 async def test_get_homes(
     caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
 ) -> None:
