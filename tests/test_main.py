@@ -348,6 +348,7 @@ async def test_generator_endpoints(
 
     assert result == mock_response.json.return_value
 
+
 @pytest.mark.parametrize(
     "method,generator_id",
     (
@@ -365,8 +366,7 @@ async def test_generator_endpoints(
         ),
     ),
 )
-async def test_generator_endpoints_bad_type(
-    method: str, generator_id: int) -> None:
+async def test_generator_endpoints_bad_type(method: str, generator_id: int) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
@@ -378,6 +378,8 @@ async def test_generator_endpoints_bad_type(
 
     with pytest.raises(TypeError):
         _ = await getattr(kem, method)(generator_id)
+
+
 async def test_auto_refresh_token() -> None:
     """Tests the auto-refresh token functionality."""
     mock_session = Mock()
