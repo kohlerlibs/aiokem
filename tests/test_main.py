@@ -181,49 +181,57 @@ async def test_authenticate_exceptions() -> None:
     assert str(excinfo.value) == "Timeout error: Request timed out"
 
 
-async def test_homeowner(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.parametrize(
+    "fixture_file,method,expected_url,expected_redactions",
+    (
+        (
+            "me.json",
+            "get_homeowner",
+            ME_URL,
+            [
+                '"email": "**redacted**"',
+                '"firstName": "**redacted**"',
+                '"lastName": "**redacted**"',
+                '"deviceSerialNumbers": [\n        "**redacted**"\n    ],\n',
+            ],
+        ),
+        (
+            "notifications.json",
+            "get_notifications",
+            NOTIFICATIONS_URL,
+            [
+                '"serialNumber": "**redacted**"',
+            ],
+        ),
+    ),
+)
+async def test_homeowner_endpoints(
+    caplog: pytest.LogCaptureFixture,
+    fixture_file: str,
+    method: str,
+    expected_url: str,
+    expected_redactions: list[str],
+) -> None:
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
     kem.set_timeout(5)
     mock_response = AsyncMock()
     mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("me.json")
+    mock_response.json.return_value = load_fixture_file(fixture_file)
     mock_session.get.return_value = mock_response
 
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        result = await kem.get_homeowner()
+        result = await getattr(kem, method)()
 
     # Assert that the session.get method was called with the correct URL and data
     mock_session.get.assert_called_once()
-    assert mock_session.get.call_args[0][0] == ME_URL
-
-    assert '"email": "**redacted**"' in caplog.text
-    assert '"firstName": "**redacted**"' in caplog.text
-    assert '"lastName": "**redacted**"' in caplog.text
-    assert '"deviceSerialNumbers": [\n        "**redacted**"\n    ],\n' in caplog.text
-
+    assert mock_session.get.call_args[0][0] == expected_url
     assert result == mock_response.json.return_value
 
-
-async def test_get_notifications() -> None:
-    # Create a mock session
-    mock_session = Mock()
-    kem = await get_kem(mock_session)
-    kem.set_timeout(5)
-    mock_response = AsyncMock()
-    mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("notifications.json")
-    mock_session.get.return_value = mock_response
-
-    result = await kem.get_notifications()
-
-    # Assert that the session.get method was called with the correct URL and data
-    mock_session.get.assert_called_once()
-    assert mock_session.get.call_args[0][0] == NOTIFICATIONS_URL
-
-    assert result == mock_response.json.return_value
+    for expected_redaction in expected_redactions:
+        assert expected_redaction in caplog.text
 
 
 async def test_get_homes(
