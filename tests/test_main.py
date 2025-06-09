@@ -199,7 +199,8 @@ async def test_authenticate_exceptions() -> None:
             "get_notifications",
             NOTIFICATIONS_URL,
             (
-                '"message": "The engine on your generator \\"mygenerator\\" has stopped."',
+                '"message": "The engine on your generator \\"mygenerator\\" has '
+                'stopped."',
                 '"serialNumber": "**redacted**"',
             ),
         ),
