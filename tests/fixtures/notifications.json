@@ -1,1 +1,62 @@
-[]
+[
+    {
+        "id": 12347093,
+        "tag": "homeowneruser:54321",
+        "type": "EngineStoppedNotice",
+        "message": "The engine on your generator \"mygenerator\" has stopped.",
+        "timestamp": "2025-06-06T18:41:15.1+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    },
+    {
+        "id": 12347080,
+        "tag": "homeowneruser:54321",
+        "type": "EngineStartedNotice",
+        "message": "The engine on your generator \"mygenerator\" has started.",
+        "timestamp": "2025-06-06T18:40:52.8+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    },
+    {
+        "id": 12347004,
+        "tag": "homeowneruser:54321",
+        "type": "Warning",
+        "message": "You have some warnings on your Generator \"mygenerator\". To ensure that your system will run successfully during an outage, please review the Activity log and contact your dealer or technician for their advice",
+        "timestamp": "2025-06-06T18:39:00.4+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    },
+    {
+        "id": 22669147,
+        "tag": "homeowneruser:54321",
+        "type": "ExerciseEndedNotice",
+        "message": "An exercise has ended on your generator \"mygenerator\".",
+        "timestamp": "2025-06-02T14:22:35.1+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    },
+    {
+        "id": 22663082,
+        "tag": "homeowneruser:54321",
+        "type": "ExerciseStartedNotice",
+        "message": "An exercise has started on your generator \"mygenerator\".",
+        "timestamp": "2025-06-02T14:02:28.4+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    },
+    {
+        "id": 22663071,
+        "tag": "homeowneruser:54321",
+        "type": "EngineStartedNotice",
+        "message": "The engine on your generator \"mygenerator\" has started.",
+        "timestamp": "2025-06-02T14:02:28.2+00:00",
+        "deviceId": 58032,
+        "serialNumber": "1234567890",
+        "displayName": "mygenerator"
+    }
+]
