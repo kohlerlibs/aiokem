@@ -23,7 +23,6 @@ from aiokem.main import (
     ME_URL,
     NOTIFICATIONS_URL,
 )
-from aiokem.message_logger import REDACTED
 from tests.conftest import MyAioKem, get_kem, load_fixture_file
 
 
@@ -182,25 +181,50 @@ async def test_authenticate_exceptions() -> None:
 
 
 @pytest.mark.parametrize(
-    "fixture_file,method,expected_url,expected_redactions",
+    "fixture_file,method,expected_url,expected_logs",
     (
         (
             "me.json",
             "get_homeowner",
             ME_URL,
-            [
+            (
                 '"email": "**redacted**"',
                 '"firstName": "**redacted**"',
                 '"lastName": "**redacted**"',
                 '"deviceSerialNumbers": [\n        "**redacted**"\n    ],\n',
-            ],
+            ),
         ),
         (
             "notifications.json",
             "get_notifications",
             NOTIFICATIONS_URL,
-            [
+            (
+                '"message": "The engine on your generator \\"mygenerator\\" has stopped."',
                 '"serialNumber": "**redacted**"',
+            ),
+        ),
+        (
+            "homes.json",
+            "get_homes",
+            HOMES_URL,
+            [
+                '"name": "Generator 1"',
+                '"displayName": "Generator 1"',
+                '"lat": "**redacted**"',
+                '"long": "**redacted**"',
+                '"address1": "**redacted**"',
+                '"address2": "**redacted**"',
+                '"city": "**redacted**"',
+                '"state": "**redacted**"',
+                '"postalCode": "**redacted**"',
+                '"country": "**redacted**"',
+                '"serialNumber": "**redacted**"',
+                '"deviceIpAddress": "**redacted**"',
+                '"macAddress": "**redacted**"',
+                '"businessPartnerNo": "**redacted**"',
+                '"e164PhoneNumber": "**redacted**"',
+                '"displayPhoneNumber": "**redacted**"',
+                '"adminEmails": "**redacted**"',
             ],
         ),
     ),
@@ -210,7 +234,7 @@ async def test_homeowner_endpoints(
     fixture_file: str,
     method: str,
     expected_url: str,
-    expected_redactions: list[str],
+    expected_logs: list[str],
 ) -> None:
     # Create a mock session
     mock_session = Mock()
@@ -229,32 +253,6 @@ async def test_homeowner_endpoints(
     mock_session.get.assert_called_once()
     assert mock_session.get.call_args[0][0] == expected_url
     assert result == mock_response.json.return_value
-
-    for expected_redaction in expected_redactions:
-        assert expected_redaction in caplog.text
-
-
-async def test_get_homes(
-    caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
-) -> None:
-    """Tests the get_homes method."""
-    # Create a mock session
-    mock_session = Mock()
-    kem = await get_kem(mock_session)
-    kem.set_timeout(5)
-    # Mock the response for the get_homes method
-    mock_response = AsyncMock()
-    mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("homes.json")
-    mock_session.get.return_value = mock_response
-
-    with caplog.at_level(logging.DEBUG):
-        caplog.clear()
-        result = await kem.get_homes()
-
-    # Assert that the session.post method was called with the correct URL and data
-    mock_session.get.assert_called_once()
-    assert mock_session.get.call_args[0][0] == HOMES_URL
     assert mock_session.get.call_args[1]["headers"]["apikey"] == API_KEY
     assert (
         mock_session.get.call_args[1]["headers"]["authorization"]
@@ -262,10 +260,8 @@ async def test_get_homes(
     )
     assert mock_session.get.call_args.kwargs["timeout"].total == 5
 
-    assert "Generator 1" in caplog.text
-    assert REDACTED in caplog.text
-
-    assert result == snapshot
+    for expected_log in expected_logs:
+        assert expected_log in caplog.text
 
 
 async def test_get_homes_exceptions() -> None:
