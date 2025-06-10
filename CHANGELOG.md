@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.3 (2025-06-10)
+
+### Bug fixes
+
+- Adjust pytest parameterize ([`55a8a50`](https://github.com/kohlerlibs/aiokem/commit/55a8a5051c53830c50a0861c54a9d6581622ac6e))
+
 ## v1.1.2 (2025-06-10)
 
 ### Bug fixes
