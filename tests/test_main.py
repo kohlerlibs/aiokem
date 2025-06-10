@@ -268,9 +268,9 @@ async def test_homeowner_endpoints(
 @pytest.mark.parametrize(
     "method",
     (
-        ("get_homeowner",),
-        ("get_notifications",),
-        ("get_homes",),
+        ("get_homeowner"),
+        ("get_notifications"),
+        ("get_homes"),
     ),
 )
 async def test_homeowner_endpoints_bad_type(method: str) -> None:
