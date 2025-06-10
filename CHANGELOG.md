@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0 (2025-06-10)
+
+### Features
+
+- Additional methods for alarms, events, notifications, home, service notes ([`aa9c3f7`](https://github.com/kohlerlibs/aiokem/commit/aa9c3f76fff4ea6b860541c821677110cd068628))
+
 ## v1.0.1 (2025-06-02)
 
 ### Bug fixes
