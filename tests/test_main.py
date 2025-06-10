@@ -265,6 +265,7 @@ async def test_homeowner_endpoints(
         assert expected_log in caplog.text
 
 
+
 @pytest.mark.parametrize(
     "method",
     (
