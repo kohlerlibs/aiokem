@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.2 (2025-06-10)
+
+### Bug fixes
+
+- Unredact fixture file ([`469b269`](https://github.com/kohlerlibs/aiokem/commit/469b269845e3962a92921056444e1fd9ef21bf79))
+
 ## v1.1.1 (2025-06-10)
 
 ### Bug fixes
