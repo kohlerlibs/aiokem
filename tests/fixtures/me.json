@@ -1,0 +1,11 @@
+{
+  "id": 12345,
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "hasAcceptedTC": true,
+  "deviceSerialNumbers": ["SGV123456"],
+  "hasApprovedDevices": true,
+  "hasAppAccount": true,
+  "hasAcceptedMarketingOutreach": true
+}

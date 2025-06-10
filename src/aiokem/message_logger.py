@@ -12,7 +12,7 @@ REDACTED: str = "**redacted**"
 
 _LOGGER = logging.getLogger(__name__)
 
-redacted_fields = [
+REDACTED_FIELDS = [
     "lat",
     "long",
     "address1",
@@ -32,6 +32,12 @@ redacted_fields = [
     "access_token",
     "refresh_token",
     "id_token",
+    "email",
+    "firstName",
+    "lastName",
+]
+REDACTED_LISTS = [
+    "deviceSerialNumbers",
 ]
 
 
@@ -43,8 +49,11 @@ def redact_fields(log_message: Any) -> Any:
             if isinstance(v, dict):
                 log_message[k] = redact_fields(v)
             elif isinstance(v, list):
-                log_message[k] = [redact_fields(i) for i in v]
-        for field in redacted_fields:
+                if k in REDACTED_LISTS:
+                    log_message[k] = [REDACTED for _ in v]
+                else:
+                    log_message[k] = [redact_fields(i) for i in v]
+        for field in REDACTED_FIELDS:
             if field in log_message:
                 log_message[field] = REDACTED
     elif isinstance(log_message, list):
@@ -53,7 +62,7 @@ def redact_fields(log_message: Any) -> Any:
                 log_message[i] = redact_fields(log_message[i])
             elif isinstance(log_message[i], list):
                 log_message[i] = [redact_fields(j) for j in log_message[i]]
-            for field in redacted_fields:
+            for field in REDACTED_FIELDS:
                 if field in log_message[i]:
                     log_message[i][field] = REDACTED
     return log_message

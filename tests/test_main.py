@@ -20,8 +20,9 @@ from aiokem.main import (
     AUTHENTICATION_URL,
     DEFAULT_CLIENT_TIMEOUT,
     HOMES_URL,
+    ME_URL,
+    NOTIFICATIONS_URL,
 )
-from aiokem.message_logger import REDACTED
 from tests.conftest import MyAioKem, get_kem, load_fixture_file
 
 
@@ -179,27 +180,80 @@ async def test_authenticate_exceptions() -> None:
     assert str(excinfo.value) == "Timeout error: Request timed out"
 
 
-async def test_get_homes(
-    caplog: pytest.LogCaptureFixture, snapshot: SnapshotAssertion
+@pytest.mark.parametrize(
+    "fixture_file,method,expected_url,expected_logs",
+    (
+        (
+            "me.json",
+            "get_homeowner",
+            ME_URL,
+            (
+                '"email": "**redacted**"',
+                '"firstName": "**redacted**"',
+                '"lastName": "**redacted**"',
+                '"deviceSerialNumbers": [\n        "**redacted**"\n    ],\n',
+            ),
+        ),
+        (
+            "notifications.json",
+            "get_notifications",
+            NOTIFICATIONS_URL,
+            (
+                '"message": "The engine on your generator \\"mygenerator\\" has '
+                'stopped."',
+                '"serialNumber": "**redacted**"',
+            ),
+        ),
+        (
+            "homes.json",
+            "get_homes",
+            HOMES_URL,
+            [
+                '"name": "Generator 1"',
+                '"displayName": "Generator 1"',
+                '"lat": "**redacted**"',
+                '"long": "**redacted**"',
+                '"address1": "**redacted**"',
+                '"address2": "**redacted**"',
+                '"city": "**redacted**"',
+                '"state": "**redacted**"',
+                '"postalCode": "**redacted**"',
+                '"country": "**redacted**"',
+                '"serialNumber": "**redacted**"',
+                '"deviceIpAddress": "**redacted**"',
+                '"macAddress": "**redacted**"',
+                '"businessPartnerNo": "**redacted**"',
+                '"e164PhoneNumber": "**redacted**"',
+                '"displayPhoneNumber": "**redacted**"',
+                '"adminEmails": "**redacted**"',
+            ],
+        ),
+    ),
+)
+async def test_homeowner_endpoints(
+    caplog: pytest.LogCaptureFixture,
+    fixture_file: str,
+    method: str,
+    expected_url: str,
+    expected_logs: list[str],
 ) -> None:
-    """Tests the get_homes method."""
     # Create a mock session
     mock_session = Mock()
     kem = await get_kem(mock_session)
     kem.set_timeout(5)
-    # Mock the response for the get_homes method
     mock_response = AsyncMock()
     mock_response.status = 200
-    mock_response.json.return_value = load_fixture_file("homes.json")
+    mock_response.json.return_value = load_fixture_file(fixture_file)
     mock_session.get.return_value = mock_response
 
     with caplog.at_level(logging.DEBUG):
         caplog.clear()
-        result = await kem.get_homes()
+        result = await getattr(kem, method)()
 
-    # Assert that the session.post method was called with the correct URL and data
+    # Assert that the session.get method was called with the correct URL and data
     mock_session.get.assert_called_once()
-    assert mock_session.get.call_args[0][0] == HOMES_URL
+    assert mock_session.get.call_args[0][0] == expected_url
+    assert result == mock_response.json.return_value
     assert mock_session.get.call_args[1]["headers"]["apikey"] == API_KEY
     assert (
         mock_session.get.call_args[1]["headers"]["authorization"]
@@ -207,10 +261,8 @@ async def test_get_homes(
     )
     assert mock_session.get.call_args.kwargs["timeout"].total == 5
 
-    assert "Generator 1" in caplog.text
-    assert REDACTED in caplog.text
-
-    assert result == snapshot
+    for expected_log in expected_logs:
+        assert expected_log in caplog.text
 
 
 async def test_get_homes_exceptions() -> None:
@@ -256,6 +308,81 @@ async def test_get_generator_data(
     )
 
     assert response == snapshot
+
+
+@pytest.mark.parametrize(
+    "fixture_file,method,generator_id,expected_url",
+    (
+        (
+            "alerts_rdc2v4.json",
+            "get_alerts",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/alerts",
+        ),
+        (
+            "events_rdc2v4.json",
+            "get_events",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/events",
+        ),
+        (
+            "maintenance_notes.json",
+            "get_maintenance_notes",
+            12345,
+            f"{API_BASE}/kem/api/v3/devices/12345/maintenance_notes",
+        ),
+    ),
+)
+async def test_generator_endpoints(
+    fixture_file: str, method: str, generator_id: int, expected_url: str
+) -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = load_fixture_file(fixture_file)
+    mock_session.get.return_value = mock_response
+
+    result = await getattr(kem, method)(generator_id)
+
+    # Assert that the session.get method was called with the correct URL and data
+    mock_session.get.assert_called_once()
+    assert str(mock_session.get.call_args[0][0]) == expected_url
+
+    assert result == mock_response.json.return_value
+
+
+@pytest.mark.parametrize(
+    "method,generator_id",
+    (
+        (
+            "get_alerts",
+            12345,
+        ),
+        (
+            "get_events",
+            12345,
+        ),
+        (
+            "get_maintenance_notes",
+            12345,
+        ),
+    ),
+)
+async def test_generator_endpoints_bad_type(method: str, generator_id: int) -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = "invalid response"
+    mock_session.get.return_value = mock_response
+
+    with pytest.raises(TypeError):
+        _ = await getattr(kem, method)(generator_id)
 
 
 async def test_auto_refresh_token() -> None:

@@ -1,0 +1,74 @@
+[
+  {
+    "id": 10000000043,
+    "name": "Engine Stopped Status",
+    "level": "Status",
+    "event": "Engine Stopped",
+    "fmi": "NotApplicable",
+    "parameterId": null,
+    "parameter": null,
+    "timestamp": "2025-05-27T15:20:05+00:00",
+    "type": "notice",
+    "isCriticalFault": false
+  },
+  {
+    "id": 10000000042,
+    "name": "Ats Exercise Ended Status",
+    "level": "Status",
+    "event": "Ats Exercise Ended",
+    "fmi": "NotApplicable",
+    "parameterId": null,
+    "parameter": null,
+    "timestamp": "2025-05-27T15:19:59+00:00",
+    "type": "notice",
+    "isCriticalFault": false
+  },
+  {
+    "id": 10000000041,
+    "name": "Generator Stopping Status",
+    "level": "Status",
+    "event": "Parameter Value Abnormal",
+    "fmi": "Unavailable",
+    "parameterId": 2634,
+    "parameter": "Source 2 Voltage L1-L2",
+    "timestamp": "2025-05-27T15:14:00+00:00",
+    "type": "notice",
+    "isCriticalFault": false
+  },
+  {
+    "id": 10000000040,
+    "name": "Generator Started And Ready To Provide Power Status",
+    "level": "Status",
+    "event": "Parameter Value Abnormal",
+    "fmi": "Available",
+    "parameterId": 2634,
+    "parameter": "Source 2 Voltage L1-L2",
+    "timestamp": "2025-05-27T15:11:00+00:00",
+    "type": "notice",
+    "isCriticalFault": false
+  },
+  {
+    "id": 10000000039,
+    "name": "Engine Started Status",
+    "level": "Status",
+    "event": "Engine Started",
+    "fmi": "NotApplicable",
+    "parameterId": null,
+    "parameter": null,
+    "timestamp": "2025-05-27T15:00:00+00:00",
+    "type": "runningNotice",
+    "isCriticalFault": false
+  },
+  {
+    "id": 10000000038,
+    "name": "Diagnostic Exercise Active Status",
+    "level": "Status",
+    "event": "Diagnostic Exercise Active",
+    "fmi": "NotApplicable",
+    "parameterId": null,
+    "parameter": null,
+    "timestamp": "2025-05-27T15:00:00+00:00",
+    "type": "notice",
+    "isCriticalFault": false
+  }
+]

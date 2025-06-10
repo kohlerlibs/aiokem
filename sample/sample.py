@@ -32,6 +32,14 @@ async def main(email: str, password: str) -> None:
         # Call the login method
         await kem.authenticate(email, password)
 
+        # Get account information
+        await kem.get_homeowner()
+
+        # Get notifications
+        notifications = await kem.get_notifications()
+        if len(notifications):
+            _LOGGER.info(f"Found {len(notifications)} notification(s)")
+
         # Get the list of homes
         homes = await kem.get_homes()
 
@@ -39,8 +47,16 @@ async def main(email: str, password: str) -> None:
         try:
             while True:
                 for home in homes:
-                    data = await kem.get_generator_data(int(home["id"]))
+                    generator_id = int(home["id"])
+                    data = await kem.get_generator_data(generator_id)
                     _LOGGER.info("Utility Voltage: %s", data["utilityVoltageV"])
+
+                    # Check for alerts.
+                    if data["device"]["alertCount"]:
+                        alerts = await kem.get_alerts(generator_id)
+                        for alert in alerts:
+                            _LOGGER.info(f"Alert ({alert['type']}): {alert['name']}")
+
                 await asyncio.sleep(60)  # Sleep for 1 minute before fetching again
         except KeyboardInterrupt:
             _LOGGER.info("Exiting...")

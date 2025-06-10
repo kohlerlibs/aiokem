@@ -44,6 +44,8 @@ API_KEY = "pgH7QzFHJx4w46fI~5Uzi4RvtTwlEXp"
 API_KEY_HDR = istr("apikey")
 API_BASE = "https://api.hems.rehlko.com"
 API_BASE_URL = URL(API_BASE)
+ME_URL = URL(f"{API_BASE}/kem/api/v3/homeowner/me")
+NOTIFICATIONS_URL = URL(f"{API_BASE}/kem/api/v3/notifications")
 HOMES_URL = URL(f"{API_BASE}/kem/api/v3/homeowner/homes")
 
 AUTH_HEADERS = CIMultiDict(
@@ -312,6 +314,27 @@ class AioKem:
             f"Failed to get data after {attempt} retries, error {last_error}"
         ) from last_error
 
+    async def get_homeowner(self) -> dict[str, Any]:
+        """Get homeowner information."""
+        _LOGGER.debug("Fetching homeowner information.")
+        response = await self._retry_get_helper(ME_URL)
+        if not isinstance(response, dict):
+            raise TypeError(
+                f"Expected an object, but got a different type {type(response)}"
+            )
+        return response
+
+    async def get_notifications(self) -> list[dict[str, Any]]:
+        """Get list of notifications."""
+        _LOGGER.debug("Fetching notifications.")
+        response = await self._retry_get_helper(NOTIFICATIONS_URL)
+        if not isinstance(response, list):
+            raise TypeError(
+                "Expected a list of notifications, but got a different type "
+                f"{type(response)}"
+            )
+        return response
+
     async def get_homes(self) -> list[dict[str, Any]]:
         """Get the list of homes."""
         _LOGGER.debug("Fetching list of homes.")
@@ -348,6 +371,42 @@ class AioKem:
             convert_timestamp(response.get("device", {}), k, self._home_timezone)
         for measurement in ("generatorLoadW", "generatorLoadPercent"):
             convert_number_abs(response, measurement)
+        return response
+
+    async def get_alerts(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of alerts for a generator."""
+        _LOGGER.debug("Fetching alerts for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}/alerts")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of alerts, but got a different type {type(response)}"
+            )
+        return response
+
+    async def get_events(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of events for a generator."""
+        _LOGGER.debug("Fetching events for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(f"/kem/api/v3/devices/{generator_id}/events")
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                f"Expected a list of events, but got a different type {type(response)}"
+            )
+        return response
+
+    async def get_maintenance_notes(self, generator_id: int) -> list[dict[str, Any]]:
+        """Get list of maintenance_notes for a generator."""
+        _LOGGER.debug("Fetching maintenance notes for generator ID %d", generator_id)
+        url = API_BASE_URL.with_path(
+            f"/kem/api/v3/devices/{generator_id}/maintenance_notes"
+        )
+        response = await self._retry_get_helper(url)
+        if not isinstance(response, list):
+            raise TypeError(
+                "Expected a list of maintenance notes, but got a different type "
+                f"{type(response)}"
+            )
         return response
 
     async def close(self) -> None:
