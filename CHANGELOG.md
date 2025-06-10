@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.1 (2025-06-10)
+
+### Bug fixes
+
+- Improve test coverage ([`f253432`](https://github.com/kohlerlibs/aiokem/commit/f253432838ed37d30a18d7ef62d8fc2f58bd4949))
+
 ## v1.1.0 (2025-06-10)
 
 ### Features
