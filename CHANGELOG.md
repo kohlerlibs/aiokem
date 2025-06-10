@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.4 (2025-06-10)
+
+### Bug fixes
+
+- Add me to authors ([`96f56fa`](https://github.com/kohlerlibs/aiokem/commit/96f56fa453febe574c42678418e3a426ba5fed0b))
+
 ## v1.1.3 (2025-06-10)
 
 ### Bug fixes
