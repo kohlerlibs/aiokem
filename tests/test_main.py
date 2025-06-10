@@ -265,6 +265,28 @@ async def test_homeowner_endpoints(
         assert expected_log in caplog.text
 
 
+@pytest.mark.parametrize(
+    "method",
+    (
+        ("get_homeowner",),
+        ("get_notifications",),
+        ("get_homes",),
+    ),
+)
+async def test_homeowner_endpoints_bad_type(method: str) -> None:
+    # Create a mock session
+    mock_session = Mock()
+    kem = await get_kem(mock_session)
+    kem.set_timeout(5)
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = "invalid response"
+    mock_session.get.return_value = mock_response
+
+    with pytest.raises(TypeError):
+        _ = await getattr(kem, method)()
+
+
 async def test_get_homes_exceptions() -> None:
     # Create a mock session
     mock_session = Mock()
