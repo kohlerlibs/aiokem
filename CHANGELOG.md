@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.1.1-rc.1 (2025-06-10)
+
+### Bug fixes
+
+- Ruff format ([`0b4a893`](https://github.com/kohlerlibs/aiokem/commit/0b4a8935bacede2fc60cee924304541013370c36))
+- Improve test coverage ([`2d18145`](https://github.com/kohlerlibs/aiokem/commit/2d18145938d81737b546247bf55dbcc7bcd1a48a))
+- Improve test coverage ([`ee22ec6`](https://github.com/kohlerlibs/aiokem/commit/ee22ec6d8c1e9fcbb983ca87519b27351d4a7ee7))
+
 ## v1.1.0 (2025-06-10)
 
 ### Features
