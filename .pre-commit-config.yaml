@@ -6,10 +6,11 @@ default_stages: [pre-commit]
 ci:
   autofix_commit_msg: "chore(pre-commit.ci): auto fixes"
   autoupdate_commit_msg: "chore(pre-commit.ci): pre-commit autoupdate"
+  skip: [uv-lock]
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.8.4
+    rev: v4.13.9
     hooks:
       - id: commitizen
         stages: [commit-msg]
@@ -28,11 +29,11 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.6.0"
+    rev: "v2.16.2"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.15
+    rev: 0.10.7
     hooks:
       - id: uv-lock
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -41,7 +42,7 @@ repos:
       - id: prettier
         args: ["--tab-width", "2"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
+    rev: v0.15.4
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -51,7 +52,7 @@ repos:
     hooks:
       - id: codespell
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.19.1
     hooks:
       - id: mypy
         additional_dependencies: []
