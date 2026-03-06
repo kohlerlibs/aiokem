@@ -6,6 +6,7 @@ default_stages: [pre-commit]
 ci:
   autofix_commit_msg: "chore(pre-commit.ci): auto fixes"
   autoupdate_commit_msg: "chore(pre-commit.ci): pre-commit autoupdate"
+  skip: [uv-lock]
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
